@@ -14,7 +14,7 @@ void main() async {
   
   final notificationService = NotificationService();
   await notificationService.initialize();
-  await notificationService.requestPermissionsIfNeeded();
+  // Permission request moved to save alarm/settings
   
   runApp(
     ProviderScope(

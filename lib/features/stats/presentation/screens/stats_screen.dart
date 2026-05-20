@@ -7,6 +7,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../controllers/stats_controller.dart';
+import '../../../../app/router/app_router.dart';
 
 class StatsScreen extends ConsumerWidget {
   const StatsScreen({super.key});
@@ -14,10 +15,15 @@ class StatsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(statsControllerProvider);
+    final router = ref.watch(routerProvider);
 
     return Scaffold(
       appBar: AppBar(
         title: Text(Copywriting.statsLabel),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => router.go('/'),
+        ),
       ),
       body: state.isLoading
           ? const Center(child: CircularProgressIndicator())

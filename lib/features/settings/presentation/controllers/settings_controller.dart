@@ -3,15 +3,18 @@ import '../../domain/entities/app_settings.dart';
 import '../../../alarms/domain/entities/stop_mode.dart';
 import '../../domain/repositories/settings_repository.dart';
 import '../../../../services/storage/local_storage_service.dart';
+import '../../../../services/notifications/notification_service.dart';
 import '../../../../app/di/providers.dart';
 
 class SettingsController extends StateNotifier<SettingsState> {
   final SettingsRepository _repository;
   final LocalStorageService _storageService;
+  final NotificationService _notificationService;
 
   SettingsController(
     this._repository,
     this._storageService,
+    this._notificationService,
   ) : super(SettingsState.initial()) {
     loadSettings();
   }
@@ -43,6 +46,11 @@ class SettingsController extends StateNotifier<SettingsState> {
     final current = state.settings;
     if (current == null) return;
 
+    if (enabled) {
+      // Request notification permission when enabling
+      await _notificationService.requestPermissionsIfNeeded();
+    }
+
     final updated = current.copyWith(notificationsEnabled: enabled);
     await _repository.saveSettings(updated);
     state = state.copyWith(settings: updated);
@@ -59,6 +67,8 @@ class SettingsController extends StateNotifier<SettingsState> {
 
   Future<void> resetAllData() async {
     try {
+      // Cancel all notifications before clearing data
+      await _notificationService.cancelAll();
       await _storageService.clearAllData();
       await loadSettings();
     } catch (e) {
@@ -103,5 +113,6 @@ class SettingsState {
 final settingsControllerProvider = StateNotifierProvider<SettingsController, SettingsState>((ref) {
   final repository = ref.watch(settingsRepositoryProvider);
   final storageService = ref.watch(storageServiceProvider);
-  return SettingsController(repository, storageService);
+  final notificationService = ref.watch(notificationServiceProvider);
+  return SettingsController(repository, storageService, notificationService);
 });

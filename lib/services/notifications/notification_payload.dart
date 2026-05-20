@@ -1,19 +1,28 @@
 import 'dart:convert';
 
 class NotificationPayload {
+  final String action;
   final String alarmId;
-  final String category;
-  final String title;
+  final String? sessionId;
+  final String? category;
+  final String? title;
 
   NotificationPayload({
+    required this.action,
     required this.alarmId,
-    required this.category,
-    required this.title,
+    this.sessionId,
+    this.category,
+    this.title,
   });
+
+  static const String actionOpenStopSession = 'openStopSession';
+  static const String actionOpenSnoozedSession = 'openSnoozedSession';
 
   Map<String, dynamic> toMap() {
     return {
+      'action': action,
       'alarmId': alarmId,
+      'sessionId': sessionId,
       'category': category,
       'title': title,
     };
@@ -21,9 +30,11 @@ class NotificationPayload {
 
   factory NotificationPayload.fromMap(Map<String, dynamic> map) {
     return NotificationPayload(
+      action: map['action'] ?? NotificationPayload.actionOpenStopSession,
       alarmId: map['alarmId'] ?? '',
-      category: map['category'] ?? '',
-      title: map['title'] ?? '',
+      sessionId: map['sessionId'],
+      category: map['category'],
+      title: map['title'],
     );
   }
 

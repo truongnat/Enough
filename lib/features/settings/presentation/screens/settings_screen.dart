@@ -9,6 +9,7 @@ import '../../../../core/widgets/app_card.dart';
 import '../../domain/entities/app_settings.dart';
 import '../../../alarms/domain/entities/stop_mode.dart';
 import '../controllers/settings_controller.dart';
+import '../../../../app/router/app_router.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -38,10 +39,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final state = ref.watch(settingsControllerProvider);
     final notifier = ref.read(settingsControllerProvider.notifier);
     final settings = state.settings;
+    final router = ref.watch(routerProvider);
 
     return Scaffold(
       appBar: AppBar(
         title: Text(Copywriting.settingsLabel),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => router.go('/'),
+        ),
       ),
       body: state.isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -77,13 +83,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           const SizedBox(height: 12.0),
           ...StopMode.values.map((mode) {
-            return RadioListTile<StopMode>(
-              value: mode,
-              groupValue: settings.defaultMode,
-              onChanged: (value) => notifier.setDefaultMode(mode),
+            return ListTile(
               title: Text(mode.displayName, style: AppTextStyles.bodyMedium),
               subtitle: Text(mode.description, style: AppTextStyles.bodySmall),
-              activeColor: AppColors.primary,
+              leading: Radio<StopMode>(
+                // ignore: deprecated_member_use
+                value: mode,
+                // ignore: deprecated_member_use
+                groupValue: settings.defaultMode,
+                // ignore: deprecated_member_use
+                onChanged: (value) => notifier.setDefaultMode(mode),
+                activeColor: AppColors.primary,
+              ),
               contentPadding: EdgeInsets.zero,
             );
           }),

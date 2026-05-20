@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/receipt_widget.dart';
 import '../controllers/receipts_controller.dart';
+import '../../../../app/router/app_router.dart';
 
 class ReceiptDetailScreen extends ConsumerWidget {
   final String receiptId;
@@ -14,6 +15,7 @@ class ReceiptDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(receiptsControllerProvider);
     final notifier = ref.read(receiptsControllerProvider.notifier);
+    final router = ref.watch(routerProvider);
 
     final receipt = state.receipts.firstWhere(
       (r) => r.id == receiptId,
@@ -23,6 +25,10 @@ class ReceiptDetailScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Biên lai'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => router.go('/'),
+        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/copywriting.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/app_card.dart';
 import '../../domain/entities/stop_type.dart';
 import '../../domain/entities/stop_mode.dart';
 import '../../domain/entities/repeat_day.dart';
@@ -178,6 +179,33 @@ class _CreateAlarmScreenState extends ConsumerState<CreateAlarmScreen> {
           style: AppTextStyles.labelLarge,
         ),
         const SizedBox(height: 12.0),
+        Wrap(
+          spacing: 8.0,
+          children: [
+            _buildQuickChip('Hàng ngày', () {
+              notifier.setRepeatDays(RepeatDay.values.toList());
+            }),
+            _buildQuickChip('Ngày thường', () {
+              notifier.setRepeatDays([
+                RepeatDay.monday,
+                RepeatDay.tuesday,
+                RepeatDay.wednesday,
+                RepeatDay.thursday,
+                RepeatDay.friday,
+              ]);
+            }),
+            _buildQuickChip('Cuối tuần', () {
+              notifier.setRepeatDays([
+                RepeatDay.saturday,
+                RepeatDay.sunday,
+              ]);
+            }),
+            _buildQuickChip('Xóa', () {
+              notifier.setRepeatDays([]);
+            }),
+          ],
+        ),
+        const SizedBox(height: 12.0),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: RepeatDay.values.map((day) {
@@ -214,7 +242,35 @@ class _CreateAlarmScreenState extends ConsumerState<CreateAlarmScreen> {
             );
           }).toList(),
         ),
+        const SizedBox(height: 8.0),
+        Text(
+          'Nếu không chọn ngày nào, alarm sẽ chỉ báo một lần tiếp theo.',
+          style: AppTextStyles.bodySmall.copyWith(
+            color: AppColors.textSecondary,
+          ),
+        ),
       ],
+    );
+  }
+
+  Widget _buildQuickChip(String label, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20.0),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+        decoration: BoxDecoration(
+          color: AppColors.cardBgElevated,
+          borderRadius: BorderRadius.circular(20.0),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Text(
+          label,
+          style: AppTextStyles.labelSmall.copyWith(
+            color: AppColors.textPrimary,
+          ),
+        ),
+      ),
     );
   }
 
@@ -228,13 +284,18 @@ class _CreateAlarmScreenState extends ConsumerState<CreateAlarmScreen> {
         ),
         const SizedBox(height: 12.0),
         ...StopMode.values.map((mode) {
-          return RadioListTile<StopMode>(
-            value: mode,
-            groupValue: state.mode,
-            onChanged: (value) => notifier.setMode(mode),
+          return ListTile(
             title: Text(mode.displayName, style: AppTextStyles.bodyMedium),
             subtitle: Text(mode.description, style: AppTextStyles.bodySmall),
-            activeColor: AppColors.primary,
+            leading: Radio<StopMode>(
+              // ignore: deprecated_member_use
+              value: mode,
+              // ignore: deprecated_member_use
+              groupValue: state.mode,
+              // ignore: deprecated_member_use
+              onChanged: (value) => notifier.setMode(mode),
+              activeColor: AppColors.primary,
+            ),
             contentPadding: EdgeInsets.zero,
           );
         }),
@@ -254,12 +315,17 @@ class _CreateAlarmScreenState extends ConsumerState<CreateAlarmScreen> {
         ),
         const SizedBox(height: 12.0),
         ...protocols.map((protocol) {
-          return RadioListTile<String>(
-            value: protocol.id,
-            groupValue: state.protocolId,
-            onChanged: (value) => notifier.setProtocol(protocol.id),
+          return ListTile(
             title: Text(protocol.title, style: AppTextStyles.bodyMedium),
-            activeColor: AppColors.primary,
+            leading: Radio<String>(
+              // ignore: deprecated_member_use
+              value: protocol.id,
+              // ignore: deprecated_member_use
+              groupValue: state.protocolId,
+              // ignore: deprecated_member_use
+              onChanged: (value) => notifier.setProtocol(protocol.id),
+              activeColor: AppColors.primary,
+            ),
             contentPadding: EdgeInsets.zero,
           );
         }),
@@ -290,11 +356,37 @@ class _CreateAlarmScreenState extends ConsumerState<CreateAlarmScreen> {
   }
 
   Widget _buildEnabledToggle(AlarmState state, AlarmController notifier) {
-    return Switch(
-      value: state.isEnabled,
-      onChanged: notifier.setEnabled,
-      activeTrackColor: AppColors.primary.withValues(alpha: 0.3),
-      activeThumbColor: AppColors.primary,
+    return AppCard(
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Kích hoạt thông báo',
+                  style: AppTextStyles.labelMedium.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 4.0),
+                Text(
+                  'Khi bật, app sẽ nhắc bạn dừng đúng giờ. Khi tắt, alarm vẫn được lưu nhưng sẽ không tạo thông báo.',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Switch(
+            value: state.isEnabled,
+            onChanged: notifier.setEnabled,
+            activeTrackColor: AppColors.primary.withValues(alpha: 0.3),
+            activeThumbColor: AppColors.primary,
+          ),
+        ],
+      ),
     );
   }
 
@@ -303,8 +395,8 @@ class _CreateAlarmScreenState extends ConsumerState<CreateAlarmScreen> {
       width: double.infinity,
       child: ElevatedButton(
         onPressed: state.isSaving ? null : () async {
-          await notifier.saveAlarm();
-          if (mounted && state.isSaved) {
+          final success = await notifier.saveAlarm();
+          if (mounted && success) {
             context.pop();
           }
         },

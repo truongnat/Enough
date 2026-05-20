@@ -15,6 +15,12 @@ class NotificationService {
   static final ValueNotifier<String?> pendingNotificationPayload =
       ValueNotifier<String?>(null);
 
+  static final StreamController<String?> _notificationTapController =
+      StreamController<String?>.broadcast();
+
+  static Stream<String?> get notificationTapStream =>
+      _notificationTapController.stream;
+
   NotificationService();
 
   Future<void> initialize() async {
@@ -46,6 +52,7 @@ class NotificationService {
       onDidReceiveNotificationResponse: (NotificationResponse response) {
         if (response.payload != null && response.payload!.isNotEmpty) {
           pendingNotificationPayload.value = response.payload;
+          _notificationTapController.add(response.payload);
         }
       },
     );
@@ -93,12 +100,6 @@ class NotificationService {
     final nextTrigger = alarm.getNextTrigger(now);
     final tzTrigger = tz.TZDateTime.from(nextTrigger, tz.local);
 
-    final payload = NotificationPayload(
-      alarmId: alarm.id,
-      category: alarm.stopType.name,
-      title: alarm.title.isNotEmpty ? alarm.title : alarm.stopType.displayName,
-    ).toJson();
-
     const androidDetails = AndroidNotificationDetails(
       'reverse_alarms_channel',
       'Stop Protocols',
@@ -125,6 +126,14 @@ class NotificationService {
       // One-time alarm
       final id = _getNotificationId(alarm.id, 0);
       try {
+        final payload = NotificationPayload(
+          action: NotificationPayload.actionOpenStopSession,
+          alarmId: alarm.id,
+          sessionId: null,
+          category: 'alarm',
+          title: alarm.stopType.displayName,
+        ).toJson();
+        
         await _localNotifications.zonedSchedule(
           id,
           'ĐỦ RỒI! ${alarm.stopType.displayName.toUpperCase()}',
@@ -161,6 +170,14 @@ class NotificationService {
         }
         targetDate = targetDate.add(Duration(days: diff));
         final tzDayTrigger = tz.TZDateTime.from(targetDate, tz.local);
+
+        final payload = NotificationPayload(
+          action: NotificationPayload.actionOpenStopSession,
+          alarmId: alarm.id,
+          sessionId: null,
+          category: 'alarm',
+          title: alarm.stopType.displayName,
+        ).toJson();
 
         await _localNotifications.zonedSchedule(
           id,
@@ -200,7 +217,11 @@ class NotificationService {
     final snoozeTrigger = now.add(Duration(minutes: minutes));
     final tzTrigger = tz.TZDateTime.from(snoozeTrigger, tz.local);
 
+    final id = _getNotificationId(session.alarmId, 9); // Use 9 for snooze ID
+    await _localNotifications.cancel(id);
+
     final payload = NotificationPayload(
+      action: NotificationPayload.actionOpenSnoozedSession,
       alarmId: session.alarmId,
       category: session.stopType.name,
       title: 'Snoozed: ${session.stopType.displayName}',
@@ -220,10 +241,6 @@ class NotificationService {
       iOS: DarwinNotificationDetails(presentAlert: true, presentSound: true),
     );
 
-    // Cancel any active snooze for this alarm first
-    final id = _getNotificationId(session.alarmId, 9); // Use 9 for snooze ID
-    await _localNotifications.cancel(id);
-
     await _localNotifications.zonedSchedule(
       id,
       'BẠN ĐANG TRÌ HOÃN! ${session.stopType.displayName.toUpperCase()}',
@@ -234,6 +251,10 @@ class NotificationService {
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
     );
+  }
+
+  Future<void> cancelAll() async {
+    await _localNotifications.cancelAll();
   }
 
   Future<void> cancelSnooze(String alarmId) async {

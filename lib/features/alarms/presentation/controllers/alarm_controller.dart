@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:uuid/uuid.dart';
 import '../../domain/entities/stop_alarm.dart';
 import '../../domain/entities/stop_type.dart';
 import '../../domain/entities/stop_mode.dart';
@@ -92,7 +93,7 @@ class AlarmState {
       createdAt: createdAt ?? this.createdAt,
       isSaving: isSaving ?? this.isSaving,
       isSaved: isSaved ?? this.isSaved,
-      error: error ?? this.error,
+      error: error,
     );
   }
 }
@@ -144,23 +145,28 @@ class AlarmController extends StateNotifier<AlarmState> {
     state = state.copyWith(title: title);
   }
 
-  Future<void> saveAlarm() async {
+  Future<bool> saveAlarm() async {
     state = state.copyWith(isSaving: true, error: null);
 
     try {
+      // Request notification permission before saving alarm
+      final notificationService = _notificationService;
+      await notificationService.requestPermissionsIfNeeded();
+      
+      final now = DateTime.now();
       final alarm = StopAlarm(
-        id: state.alarmId ?? DateTime.now().millisecondsSinceEpoch.toString(),
+        id: state.alarmId ?? Uuid().v4(),
         title: state.title,
         stopType: state.stopType,
-        customTypeLabel: state.customTypeLabel?.isEmpty == true ? null : state.customTypeLabel,
+        customTypeLabel: state.customTypeLabel,
         timeOfDayHour: state.hour,
         timeOfDayMinute: state.minute,
         repeatDays: state.repeatDays,
         mode: state.mode,
         protocolId: state.protocolId,
         isEnabled: state.isEnabled,
-        createdAt: state.createdAt ?? DateTime.now(),
-        updatedAt: DateTime.now(),
+        createdAt: state.createdAt ?? now,
+        updatedAt: now,
       );
 
       if (state.alarmId == null) {
@@ -169,11 +175,22 @@ class AlarmController extends StateNotifier<AlarmState> {
         await _updateAlarm(alarm);
       }
 
-      await _notificationService.scheduleStopAlarm(alarm);
+      await _notificationService.rescheduleAll(await _repository.getAlarms());
 
-      state = state.copyWith(isSaving: false, isSaved: true);
+      state = state.copyWith(
+        isSaving: false,
+        isSaved: true,
+        alarmId: alarm.id,
+        error: null,
+      );
+      return true;
     } catch (e) {
-      state = state.copyWith(isSaving: false, error: e.toString());
+      state = state.copyWith(
+        isSaving: false,
+        isSaved: false,
+        error: e.toString(),
+      );
+      return false;
     }
   }
 

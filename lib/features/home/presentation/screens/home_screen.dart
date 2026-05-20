@@ -17,10 +17,11 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
+  int _currentIndex = 0;
+
   @override
   Widget build(BuildContext context) {
     final homeState = ref.watch(homeControllerProvider);
-    final currentIndex = ValueNotifier<int>(0);
 
     return Scaffold(
       body: SafeArea(
@@ -49,9 +50,41 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         ),
       ),
-      bottomNavigationBar: _buildBottomNavigationBar(currentIndex),
-      floatingActionButton: _buildFloatingActionButton(context),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+          if (index == 0) {
+            // Already on home
+          } else if (index == 1) {
+            context.go('/history');
+          } else if (index == 2) {
+            context.go('/stats');
+          } else if (index == 3) {
+            context.go('/settings');
+          }
+        },
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Trang chủ',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.history),
+            label: 'Lịch sử',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.bar_chart),
+            label: 'Thống kê',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings),
+            label: 'Cài đặt',
+          ),
+        ],
+      ),
     );
   }
 
@@ -206,93 +239,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             style: AppTextStyles.bodySecondary(AppColors.textSecondary),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildBottomNavigationBar(ValueNotifier<int> currentIndex) {
-    return Container(
-      decoration: const BoxDecoration(
-        border: Border(
-          top: BorderSide(color: AppColors.border),
-        ),
-      ),
-      child: BottomNavigationBar(
-        currentIndex: currentIndex.value,
-        onTap: (index) {
-          currentIndex.value = index;
-          switch (index) {
-            case 0:
-              context.go('/');
-              break;
-            case 1:
-              context.go('/history');
-              break;
-            case 3:
-              context.go('/stats');
-              break;
-            case 4:
-              context.go('/settings');
-              break;
-          }
-        },
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.history_outlined),
-            activeIcon: Icon(Icons.history),
-            label: 'Lịch sử',
-          ),
-          BottomNavigationBarItem(
-            icon: SizedBox.shrink(),
-            label: '',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.bar_chart_outlined),
-            activeIcon: Icon(Icons.bar_chart),
-            label: 'Thống kê',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings_outlined),
-            activeIcon: Icon(Icons.settings),
-            label: 'Cài đặt',
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFloatingActionButton(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppColors.primary,
-            AppColors.primaryDark,
-          ],
-        ),
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.4),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: FloatingActionButton(
-        onPressed: () => context.push('/alarm/create'),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        child: const Icon(
-          Icons.add,
-          size: 32,
-          color: AppColors.background,
-        ),
       ),
     );
   }

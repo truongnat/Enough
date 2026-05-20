@@ -10,33 +10,54 @@ class StopSessionRepositoryImpl implements StopSessionRepository {
 
   @override
   Future<List<StopSession>> getSessions() async {
-    return await datasource.getAllSessions();
+    try {
+      return await datasource.getAllSessions();
+    } catch (e) {
+      print('[StopSessionRepository] Error getting sessions: $e');
+      rethrow;
+    }
   }
 
   @override
   Future<void> saveSession(StopSession session) async {
-    final sessionJson = StopSessionModel.toJson(session);
-    await datasource.saveActiveSession(sessionJson);
+    try {
+      final sessionJson = StopSessionModel.toJson(session);
+      await datasource.saveSession(session.id, sessionJson);
+    } catch (e) {
+      print('[StopSessionRepository] Error saving session: $e');
+      rethrow;
+    }
   }
 
   @override
   Future<void> deleteSession(String sessionId) async {
-    await datasource.deleteActiveSession();
+    try {
+      await datasource.deleteSession(sessionId);
+    } catch (e) {
+      print('[StopSessionRepository] Error deleting session: $e');
+      rethrow;
+    }
   }
 
   @override
   Future<StopSession?> getSessionById(String sessionId) async {
-    final sessions = await getSessions();
     try {
+      final sessions = await getSessions();
       return sessions.firstWhere((s) => s.id == sessionId);
     } catch (e) {
+      print('[StopSessionRepository] Session not found: $sessionId');
       return null;
     }
   }
 
   @override
   Future<List<StopSession>> getSessionsByAlarmId(String alarmId) async {
-    final sessions = await getSessions();
-    return sessions.where((s) => s.alarmId == alarmId).toList();
+    try {
+      final sessions = await getSessions();
+      return sessions.where((s) => s.alarmId == alarmId).toList();
+    } catch (e) {
+      print('[StopSessionRepository] Error getting sessions by alarmId: $e');
+      rethrow;
+    }
   }
 }

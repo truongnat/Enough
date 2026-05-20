@@ -4,8 +4,8 @@ import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/alarms/presentation/screens/create_alarm_screen.dart';
 import '../../features/alarms/presentation/screens/edit_alarm_screen.dart';
 import '../../features/stop_session/presentation/screens/stop_session_screen.dart';
-import '../../features/receipts/presentation/screens/receipts_screen.dart';
 import '../../features/receipts/presentation/screens/receipt_detail_screen.dart';
+import '../../features/history/presentation/screens/history_screen.dart';
 import '../../features/stats/presentation/screens/stats_screen.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
 
@@ -42,7 +42,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/history',
         name: 'history',
-        builder: (context, state) => const ReceiptsScreen(),
+        builder: (context, state) => const HistoryScreen(),
       ),
       GoRoute(
         path: '/receipt/:id',

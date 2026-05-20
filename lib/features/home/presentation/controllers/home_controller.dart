@@ -80,7 +80,7 @@ class HomeState {
       stoppedCount: stoppedCount ?? this.stoppedCount,
       latestReceipt: latestReceipt ?? this.latestReceipt,
       isLoading: isLoading ?? this.isLoading,
-      error: error ?? this.error,
+      error: error,
     );
   }
 }

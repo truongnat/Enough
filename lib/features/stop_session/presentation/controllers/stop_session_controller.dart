@@ -224,7 +224,7 @@ class StopSessionState {
       isLoading: isLoading ?? this.isLoading,
       isCompleted: isCompleted ?? this.isCompleted,
       isSnoozed: isSnoozed ?? this.isSnoozed,
-      error: error ?? this.error,
+      error: error,
     );
   }
 }

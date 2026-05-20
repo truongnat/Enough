@@ -13,8 +13,9 @@ class ReceiptRepositoryImpl implements ReceiptRepository {
     try {
       final list = await _datasource.getReceipts();
       return list.map((json) => StopReceiptModel.fromJson(json)).toList();
-    } catch (_) {
-      return [];
+    } catch (e) {
+      print('[ReceiptRepository] Error getting receipts: $e');
+      rethrow;
     }
   }
 

@@ -5,7 +5,9 @@ import '../../../../core/constants/copywriting.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../alarms/domain/entities/stop_mode.dart';
+import '../../../stop_session/domain/entities/stop_session_status.dart';
 import '../controllers/stop_session_controller.dart';
+import '../../../../app/router/app_router.dart';
 
 class StopSessionScreen extends ConsumerStatefulWidget {
   final String? alarmId;
@@ -29,6 +31,7 @@ class _StopSessionScreenState extends ConsumerState<StopSessionScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(stopSessionControllerProvider);
     final notifier = ref.read(stopSessionControllerProvider.notifier);
+    final router = ref.watch(routerProvider);
 
     if (state.isLoading) {
       return const Scaffold(
@@ -45,35 +48,56 @@ class _StopSessionScreenState extends ConsumerState<StopSessionScreen> {
     }
 
     if (state.isCompleted) {
-      return _buildCompletionScreen(state);
+      return _buildCompletionScreen(state, router);
     }
 
     if (state.isSnoozed) {
-      return _buildSnoozeScreen(state);
+      return _buildSnoozeScreen(state, router);
     }
 
-    return Scaffold(
-      body: SafeArea(
-        child: Container(
-          color: AppColors.background,
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _buildTitle(state),
-                    const SizedBox(height: 16.0),
-                    _buildMessage(state),
-                    const SizedBox(height: 24.0),
-                    _buildProtocolChecklist(state, notifier),
-                  ],
+    return PopScope(
+      canPop: state.session?.status != StopSessionStatus.active,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop && state.session?.status == StopSessionStatus.active) {
+          _showExitConfirmDialog(router);
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Phiên dừng'),
+          leading: IconButton(
+            icon: const Icon(Icons.close),
+            onPressed: () {
+              if (state.session?.status == StopSessionStatus.active) {
+                _showExitConfirmDialog(router);
+              } else {
+                router.go('/');
+              }
+            },
+          ),
+        ),
+        body: SafeArea(
+          child: Container(
+            color: AppColors.background,
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _buildTitle(state),
+                      const SizedBox(height: 16.0),
+                      _buildMessage(state),
+                      const SizedBox(height: 24.0),
+                      _buildProtocolChecklist(state, notifier),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 24.0),
-              _buildActionButtons(state, notifier),
-            ],
+                const SizedBox(height: 24.0),
+                _buildActionButtons(state, notifier),
+              ],
+            ),
           ),
         ),
       ),
@@ -206,8 +230,15 @@ class _StopSessionScreenState extends ConsumerState<StopSessionScreen> {
     );
   }
 
-  Widget _buildCompletionScreen(StopSessionState state) {
+  Widget _buildCompletionScreen(StopSessionState state, GoRouter router) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('Đã dừng'),
+        leading: IconButton(
+          icon: const Icon(Icons.close),
+          onPressed: () => router.go('/'),
+        ),
+      ),
       body: SafeArea(
         child: Container(
           color: AppColors.background,
@@ -238,7 +269,7 @@ class _StopSessionScreenState extends ConsumerState<StopSessionScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () => context.go('/'),
+                  onPressed: () => router.go('/'),
                   child: Text(Copywriting.back),
                 ),
               ),
@@ -249,8 +280,15 @@ class _StopSessionScreenState extends ConsumerState<StopSessionScreen> {
     );
   }
 
-  Widget _buildSnoozeScreen(StopSessionState state) {
+  Widget _buildSnoozeScreen(StopSessionState state, GoRouter router) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('Đã hoãn'),
+        leading: IconButton(
+          icon: const Icon(Icons.close),
+          onPressed: () => router.go('/'),
+        ),
+      ),
       body: SafeArea(
         child: Container(
           color: AppColors.background,
@@ -281,13 +319,36 @@ class _StopSessionScreenState extends ConsumerState<StopSessionScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () => context.go('/'),
+                  onPressed: () => router.go('/'),
                   child: Text(Copywriting.back),
                 ),
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  void _showExitConfirmDialog(GoRouter router) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Thoát phiên dừng?'),
+        content: const Text('Bạn chưa hoàn thành protocol. Phiên này sẽ vẫn được lưu để xử lý sau.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Ở lại'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              router.go('/');
+            },
+            child: const Text('Thoát'),
+          ),
+        ],
       ),
     );
   }

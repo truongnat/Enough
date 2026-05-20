@@ -13,8 +13,9 @@ class AlarmRepositoryImpl implements AlarmRepository {
     try {
       final jsonList = await _datasource.getAlarms();
       return jsonList.map((json) => StopAlarmModel.fromJson(json)).toList();
-    } catch (_) {
-      return [];
+    } catch (e) {
+      print('[AlarmRepository] Error getting alarms: $e');
+      rethrow;
     }
   }
 
@@ -34,7 +35,8 @@ class AlarmRepositoryImpl implements AlarmRepository {
     final alarms = await getAlarms();
     try {
       return alarms.firstWhere((a) => a.id == id);
-    } catch (_) {
+    } catch (e) {
+      print('[AlarmRepository] Alarm not found: $id');
       return null;
     }
   }
