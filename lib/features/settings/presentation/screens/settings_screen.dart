@@ -94,13 +94,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   Widget _buildNotificationsCard(AppSettings settings, SettingsController notifier) {
     return AppCard(
-      child: SwitchListTile(
+      child: Switch(
         value: settings.notificationsEnabled,
         onChanged: notifier.setNotificationsEnabled,
-        title: Text(Copywriting.notificationsLabel, style: AppTextStyles.bodyMedium),
-        subtitle: Text('Nhận thông báo khi đến giờ dừng', style: AppTextStyles.bodySmall),
-        activeColor: AppColors.primary,
-        contentPadding: EdgeInsets.zero,
+        activeTrackColor: AppColors.primary.withValues(alpha: 0.3),
+        activeThumbColor: AppColors.primary,
       ),
     );
   }

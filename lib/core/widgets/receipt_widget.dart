@@ -82,7 +82,7 @@ class ReceiptWidget extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(AppConstants.paddingM),
             decoration: BoxDecoration(
-              color: AppColors.success.withOpacity(0.1),
+              color: AppColors.success.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(AppConstants.radiusM),
               border: Border.all(color: AppColors.success),
             ),

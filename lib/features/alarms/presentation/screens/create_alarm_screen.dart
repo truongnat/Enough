@@ -290,12 +290,11 @@ class _CreateAlarmScreenState extends ConsumerState<CreateAlarmScreen> {
   }
 
   Widget _buildEnabledToggle(AlarmState state, AlarmController notifier) {
-    return SwitchListTile(
+    return Switch(
       value: state.isEnabled,
       onChanged: notifier.setEnabled,
-      title: Text(Copywriting.enabledLabel, style: AppTextStyles.bodyMedium),
-      activeColor: AppColors.primary,
-      contentPadding: EdgeInsets.zero,
+      activeTrackColor: AppColors.primary.withValues(alpha: 0.3),
+      activeThumbColor: AppColors.primary,
     );
   }
 
@@ -303,11 +302,12 @@ class _CreateAlarmScreenState extends ConsumerState<CreateAlarmScreen> {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
-        onPressed: state.isSaving ? null : () => notifier.saveAlarm().then((_) {
-          if (state.isSaved) {
+        onPressed: state.isSaving ? null : () async {
+          await notifier.saveAlarm();
+          if (mounted && state.isSaved) {
             context.pop();
           }
-        }),
+        },
         child: Text(Copywriting.saveButton),
       ),
     );
