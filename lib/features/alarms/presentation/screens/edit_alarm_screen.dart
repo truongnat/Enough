@@ -1,0 +1,352 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../../../../core/constants/app_constants.dart';
+import '../../../../core/constants/copywriting.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
+import '../../domain/entities/stop_type.dart';
+import '../../domain/entities/stop_mode.dart';
+import '../../domain/entities/repeat_day.dart';
+import '../../domain/entities/stop_protocol.dart';
+import '../controllers/alarm_controller.dart';
+import '../../../../app/di/providers.dart';
+import '../../../home/presentation/controllers/home_controller.dart';
+
+class EditAlarmScreen extends ConsumerStatefulWidget {
+  final String alarmId;
+
+  const EditAlarmScreen({super.key, required this.alarmId});
+
+  @override
+  ConsumerState<EditAlarmScreen> createState() => _EditAlarmScreenState();
+}
+
+class _EditAlarmScreenState extends ConsumerState<EditAlarmScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadAlarm();
+    });
+  }
+
+  Future<void> _loadAlarm() async {
+    final repository = ref.read(alarmRepositoryProvider);
+    final alarms = await repository.getAlarms();
+    final alarm = alarms.firstWhere((a) => a.id == widget.alarmId);
+    ref.read(alarmControllerProvider.notifier).loadAlarm(alarm);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = ref.watch(alarmControllerProvider);
+    final notifier = ref.read(alarmControllerProvider.notifier);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(Copywriting.editAlarmLabel),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.delete),
+            onPressed: () => _showDeleteDialog(controller, notifier),
+          ),
+        ],
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildStopTypeSelector(controller, notifier),
+            const SizedBox(height: 16.0),
+            _buildTimePicker(controller, notifier),
+            const SizedBox(height: 16.0),
+            _buildRepeatDaysSelector(controller, notifier),
+            const SizedBox(height: 16.0),
+            _buildModeSelector(controller, notifier),
+            const SizedBox(height: 16.0),
+            _buildProtocolSelector(controller, notifier),
+            const SizedBox(height: 16.0),
+            _buildCustomTypeField(controller, notifier),
+            const SizedBox(height: 16.0),
+            _buildEnabledToggle(controller, notifier),
+            const SizedBox(height: 48.0),
+            _buildSaveButton(controller, notifier),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStopTypeSelector(AlarmState state, AlarmController notifier) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          Copywriting.stopTypeLabel,
+          style: AppTextStyles.labelLarge,
+        ),
+        const SizedBox(height: 12.0),
+        Wrap(
+          spacing: 12.0,
+          runSpacing: 12.0,
+          children: StopType.values.map((type) {
+            final isSelected = state.stopType == type;
+            return InkWell(
+              onTap: () => notifier.setStopType(type),
+              borderRadius: BorderRadius.circular(16.0),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16.0,
+                  vertical: 12.0,
+                ),
+                decoration: BoxDecoration(
+                  color: isSelected ? AppColors.primary : AppColors.cardBgElevated,
+                  borderRadius: BorderRadius.circular(16.0),
+                  border: Border.all(
+                    color: isSelected ? AppColors.primary : AppColors.border,
+                  ),
+                ),
+                child: Text(
+                  type.displayName,
+                  style: AppTextStyles.labelMedium.copyWith(
+                    color: isSelected ? AppColors.background : AppColors.textPrimary,
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTimePicker(AlarmState state, AlarmController notifier) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          Copywriting.timeLabel,
+          style: AppTextStyles.labelLarge,
+        ),
+        const SizedBox(height: 12.0),
+        Container(
+          padding: const EdgeInsets.all(12.0),
+          decoration: BoxDecoration(
+            color: AppColors.cardBgElevated,
+            borderRadius: BorderRadius.circular(16.0),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _buildTimeButton(state.hour, (hour) => notifier.setTime(hour, state.minute), 0, 23),
+              Text(':', style: AppTextStyles.alarmTime),
+              _buildTimeButton(state.minute, (minute) => notifier.setTime(state.hour, minute), 0, 59),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTimeButton(int value, Function(int) onChanged, int min, int max) {
+    return Row(
+      children: [
+        IconButton(
+          icon: const Icon(Icons.remove),
+          onPressed: value > min ? () => onChanged(value - 1) : null,
+          color: AppColors.primary,
+        ),
+        Container(
+          width: 80,
+          alignment: Alignment.center,
+          child: Text(
+            value.toString().padLeft(2, '0'),
+            style: AppTextStyles.h2,
+          ),
+        ),
+        IconButton(
+          icon: const Icon(Icons.add),
+          onPressed: value < max ? () => onChanged(value + 1) : null,
+          color: AppColors.primary,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRepeatDaysSelector(AlarmState state, AlarmController notifier) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          Copywriting.repeatDaysLabel,
+          style: AppTextStyles.labelLarge,
+        ),
+        const SizedBox(height: 12.0),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: RepeatDay.values.map((day) {
+            final isSelected = state.repeatDays.contains(day);
+            return InkWell(
+              onTap: () {
+                final newDays = List<RepeatDay>.from(state.repeatDays);
+                if (isSelected) {
+                  newDays.remove(day);
+                } else {
+                  newDays.add(day);
+                }
+                notifier.setRepeatDays(newDays);
+              },
+              borderRadius: BorderRadius.circular(AppConstants.radiusM),
+              child: Container(
+                width: 40,
+                height: 40,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: isSelected ? AppColors.primary : AppColors.cardBgElevated,
+                  borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                  border: Border.all(
+                    color: isSelected ? AppColors.primary : AppColors.border,
+                  ),
+                ),
+                child: Text(
+                  day.shortName,
+                  style: AppTextStyles.labelSmall.copyWith(
+                    color: isSelected ? AppColors.background : AppColors.textPrimary,
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildModeSelector(AlarmState state, AlarmController notifier) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          Copywriting.modeLabel,
+          style: AppTextStyles.labelLarge,
+        ),
+        const SizedBox(height: 12.0),
+        ...StopMode.values.map((mode) {
+          return RadioListTile<StopMode>(
+            value: mode,
+            groupValue: state.mode,
+            onChanged: (value) => notifier.setMode(mode),
+            title: Text(mode.displayName, style: AppTextStyles.bodyMedium),
+            subtitle: Text(mode.description, style: AppTextStyles.bodySmall),
+            activeColor: AppColors.primary,
+            contentPadding: EdgeInsets.zero,
+          );
+        }),
+      ],
+    );
+  }
+
+  Widget _buildProtocolSelector(AlarmState state, AlarmController notifier) {
+    final protocols = StopProtocol.getTemplatesFor(state.stopType);
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          Copywriting.protocolLabelAlarm,
+          style: AppTextStyles.labelLarge,
+        ),
+        const SizedBox(height: 12.0),
+        ...protocols.map((protocol) {
+          return RadioListTile<String>(
+            value: protocol.id,
+            groupValue: state.protocolId,
+            onChanged: (value) => notifier.setProtocol(protocol.id),
+            title: Text(protocol.title, style: AppTextStyles.bodyMedium),
+            activeColor: AppColors.primary,
+            contentPadding: EdgeInsets.zero,
+          );
+        }),
+      ],
+    );
+  }
+
+  Widget _buildCustomTypeField(AlarmState state, AlarmController notifier) {
+    if (state.stopType != StopType.custom) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Tên loại dừng',
+          style: AppTextStyles.labelLarge,
+        ),
+        const SizedBox(height: 12.0),
+        TextField(
+          decoration: const InputDecoration(
+            hintText: Copywriting.customTypeHint,
+          ),
+          style: AppTextStyles.bodyMedium,
+          controller: TextEditingController(text: state.customTypeLabel ?? ''),
+          onChanged: notifier.setCustomTypeLabel,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEnabledToggle(AlarmState state, AlarmController notifier) {
+    return SwitchListTile(
+      value: state.isEnabled,
+      onChanged: notifier.setEnabled,
+      title: Text(Copywriting.enabledLabel, style: AppTextStyles.bodyMedium),
+      activeColor: AppColors.primary,
+      contentPadding: EdgeInsets.zero,
+    );
+  }
+
+  Widget _buildSaveButton(AlarmState state, AlarmController notifier) {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: state.isSaving ? null : () => notifier.saveAlarm().then((_) {
+          if (state.isSaved) {
+            context.pop();
+            ref.read(homeControllerProvider.notifier).refresh();
+          }
+        }),
+        child: Text(Copywriting.saveButton),
+      ),
+    );
+  }
+
+  void _showDeleteDialog(AlarmState state, AlarmController notifier) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(Copywriting.delete),
+        content: const Text('Bạn có chắc muốn xóa báo thức này?'),
+        actions: [
+          TextButton(
+            onPressed: () => context.pop(),
+            child: Text(Copywriting.cancel),
+          ),
+          TextButton(
+            onPressed: () {
+              notifier.deleteAlarm(widget.alarmId);
+              context.pop();
+              context.pop();
+              if (mounted) {
+                ref.read(homeControllerProvider.notifier).refresh();
+                context.pop();
+              }
+            },
+            child: Text(Copywriting.delete, style: const TextStyle(color: AppColors.error)),
+          ),
+        ],
+      ),
+    );
+  }
+}
