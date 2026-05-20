@@ -24,9 +24,14 @@ class HistoryController extends StateNotifier<HistoryState> {
       final sessions = await _sessionRepository.getSessions();
       final receipts = await _receiptRepository.getReceipts();
       
+      // Sort sessions descending by startedAt
+      sessions.sort((a, b) => b.startedAt.compareTo(a.startedAt));
+
       state = state.copyWith(
         sessions: sessions,
+        filteredSessions: sessions, // Match 'all' initially
         receipts: receipts,
+        selectedFilter: 'all',
         isLoading: false,
       );
     } catch (e) {

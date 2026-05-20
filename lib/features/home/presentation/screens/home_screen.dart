@@ -17,13 +17,18 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  int _currentIndex = 0;
-
   @override
   Widget build(BuildContext context) {
     final homeState = ref.watch(homeControllerProvider);
 
     return Scaffold(
+      backgroundColor: AppColors.background,
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => context.push('/alarm/create'),
+        backgroundColor: AppColors.primary,
+        foregroundColor: AppColors.background,
+        child: const Icon(Icons.add, size: 28),
+      ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(AppConstants.paddingL),
@@ -49,41 +54,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ],
           ),
         ),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-          if (index == 0) {
-            // Already on home
-          } else if (index == 1) {
-            context.go('/history');
-          } else if (index == 2) {
-            context.go('/stats');
-          } else if (index == 3) {
-            context.go('/settings');
-          }
-        },
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Trang chủ',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.history),
-            label: 'Lịch sử',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.bar_chart),
-            label: 'Thống kê',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: 'Cài đặt',
-          ),
-        ],
       ),
     );
   }

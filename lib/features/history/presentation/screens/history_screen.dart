@@ -5,11 +5,10 @@ import 'package:intl/intl.dart';
 import '../../../../core/constants/copywriting.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/widgets/app_card.dart';
+import '../../../../core/widgets/product_components.dart';
 import '../../../stop_session/domain/entities/stop_session.dart';
 import '../../../stop_session/domain/entities/stop_session_status.dart';
 import '../controllers/history_controller.dart';
-import '../../../../app/router/app_router.dart';
 
 class HistoryScreen extends ConsumerStatefulWidget {
   const HistoryScreen({super.key});
@@ -23,50 +22,49 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(historyControllerProvider);
     final notifier = ref.read(historyControllerProvider.notifier);
-    final router = ref.watch(routerProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(Copywriting.historyLabel),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => router.go('/'),
-        ),
-      ),
-      body: Column(
-        children: [
-          _buildFilterChips(state, notifier),
-          Expanded(
-            child: state.isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : state.filteredSessions.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.history,
-                              size: 64,
-                              color: AppColors.textTertiary,
-                            ),
-                            const SizedBox(height: 16.0),
-                            Text(
-                              Copywriting.emptyHistory,
-                              style: AppTextStyles.bodyMedium,
-                            ),
-                          ],
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        child: Column(
+          children: [
+            AppPageHeader(
+              title: Copywriting.historyLabel,
+              leading: const SizedBox.shrink(), // No leading back button on main tab
+            ),
+            _buildFilterChips(state, notifier),
+            Expanded(
+              child: state.isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : state.filteredSessions.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                Icons.history,
+                                size: 64,
+                                color: AppColors.textTertiary,
+                              ),
+                              const SizedBox(height: 16.0),
+                              Text(
+                                Copywriting.emptyHistory,
+                                style: AppTextStyles.bodyMedium,
+                              ),
+                            ],
+                          ),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.all(16.0),
+                          itemCount: state.filteredSessions.length,
+                          itemBuilder: (context, index) {
+                            final session = state.filteredSessions[index];
+                            return _buildSessionCard(session, state.receipts);
+                          },
                         ),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.all(16.0),
-                        itemCount: state.filteredSessions.length,
-                        itemBuilder: (context, index) {
-                          final session = state.filteredSessions[index];
-                          return _buildSessionCard(session, state.receipts);
-                        },
-                      ),
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -91,64 +89,71 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
   }
 
   Widget _buildSessionCard(StopSession session, List receipts) {
-    final hasReceipt = receipts.any((r) => r.sessionId == session.id);
+    final dynamic matchingReceipt = receipts.firstWhere(
+      (dynamic r) => r.sessionId == session.id,
+      orElse: () => null,
+    );
+    final hasReceipt = matchingReceipt != null;
     final statusColor = _getStatusColor(session.status);
     final statusText = _getStatusText(session.status);
 
-    return AppCard(
-      onTap: hasReceipt
-          ? () => context.push('/receipt/${session.id}')
-          : null,
-      child: Row(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: statusColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12.0),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12.0),
+      child: AppSurfaceCard(
+        onTap: hasReceipt
+            ? () => context.push('/receipt/${matchingReceipt.id}')
+            : null,
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: statusColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12.0),
+              ),
+              child: Icon(
+                _getStatusIcon(session.status),
+                color: statusColor,
+                size: 24,
+              ),
             ),
-            child: Icon(
-              _getStatusIcon(session.status),
-              color: statusColor,
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 12.0),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  session.stopType.displayName,
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    fontWeight: FontWeight.w600,
+            const SizedBox(width: 12.0),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    session.stopType.displayName,
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4.0),
-                Text(
-                  DateFormat('MMM dd, yyyy - HH:mm').format(session.startedAt),
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.textSecondary,
+                  const SizedBox(height: 4.0),
+                  Text(
+                    DateFormat('dd/MM/yyyy - HH:mm').format(session.startedAt),
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4.0),
-                Text(
-                  statusText,
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: statusColor,
-                    fontWeight: FontWeight.w500,
+                  const SizedBox(height: 4.0),
+                  Text(
+                    statusText,
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: statusColor,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          if (hasReceipt)
-            const Icon(
-              Icons.chevron_right,
-              color: AppColors.textSecondary,
-            ),
-        ],
+            if (hasReceipt)
+              const Icon(
+                Icons.chevron_right,
+                color: AppColors.textSecondary,
+              ),
+          ],
+        ),
       ),
     );
   }

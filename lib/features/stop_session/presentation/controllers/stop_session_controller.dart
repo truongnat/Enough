@@ -48,11 +48,13 @@ class StopSessionController extends StateNotifier<StopSessionState> {
       final protocol = StopProtocol.getTemplatesFor(alarm.stopType)
           .firstWhere((p) => p.id == alarm.protocolId);
 
-      // Create or get active session
+      // Create or get active / snoozed session
       StopSession session;
       final sessions = await _sessionRepository.getSessionsByAlarmId(alarmId);
+      
+      // Look for active or snoozed sessions
       final existingSession = sessions.firstWhere(
-        (s) => s.status == StopSessionStatus.active,
+        (s) => s.status == StopSessionStatus.active || s.status == StopSessionStatus.snoozed,
         orElse: () => StopSession(
           id: '',
           alarmId: '',
@@ -65,7 +67,13 @@ class StopSessionController extends StateNotifier<StopSessionState> {
       );
 
       if (existingSession.id.isNotEmpty) {
-        session = existingSession;
+        // If it was snoozed, we reactivate it when loaded again
+        if (existingSession.status == StopSessionStatus.snoozed) {
+          session = existingSession.copyWith(status: StopSessionStatus.active);
+          await _sessionRepository.saveSession(session);
+        } else {
+          session = existingSession;
+        }
       } else {
         session = StopSession(
           id: IdGenerator.generate(),

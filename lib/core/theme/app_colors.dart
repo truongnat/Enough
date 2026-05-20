@@ -5,8 +5,6 @@ class AppColors {
   static const Color background = Color(0xFF0C0C0E);
   static const Color cardBg = Color(0xFF17171B);
   static const Color cardBgElevated = Color(0xFF202025);
-  static const Color backgroundDark = Color(0xFF121212);
-  static const Color cardBgDark = Color(0xFF1E1E1E);
   
   // Accents
   static const Color primary = Color(0xFFFF8C66); // Warm Peach

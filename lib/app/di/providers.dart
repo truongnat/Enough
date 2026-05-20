@@ -13,8 +13,6 @@ import 'package:reverse_alarm/features/settings/domain/repositories/settings_rep
 import 'package:reverse_alarm/features/stop_session/data/datasources/stop_session_local_datasource.dart';
 import 'package:reverse_alarm/features/stop_session/data/repositories/stop_session_repository_impl.dart';
 import 'package:reverse_alarm/features/stop_session/domain/repositories/stop_session_repository.dart';
-import 'package:reverse_alarm/features/stats/presentation/controllers/stats_controller.dart';
-import 'package:reverse_alarm/features/settings/presentation/controllers/settings_controller.dart';
 
 // 1. Services Providers
 final storageServiceProvider = Provider<LocalStorageService>((ref) {
@@ -65,17 +63,4 @@ final stopSessionRepositoryProvider = Provider<StopSessionRepository>((ref) {
 final settingsRepositoryProvider = Provider<SettingsRepository>((ref) {
   final datasource = ref.watch(settingsLocalDatasourceProvider);
   return SettingsRepositoryImpl(datasource);
-});
-
-// 4. Controller Providers
-final statsControllerProvider = StateNotifierProvider<StatsController, StatsState>((ref) {
-  final sessionRepository = ref.watch(stopSessionRepositoryProvider);
-  return StatsController(sessionRepository);
-});
-
-final settingsControllerProvider = StateNotifierProvider<SettingsController, SettingsState>((ref) {
-  final repository = ref.watch(settingsRepositoryProvider);
-  final storageService = ref.watch(storageServiceProvider);
-  final notificationService = ref.watch(notificationServiceProvider);
-  return SettingsController(repository, storageService, notificationService);
 });

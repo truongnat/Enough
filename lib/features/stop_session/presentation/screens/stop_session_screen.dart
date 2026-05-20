@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/copywriting.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/product_components.dart';
 import '../../../alarms/domain/entities/stop_mode.dart';
 import '../../../stop_session/domain/entities/stop_session_status.dart';
 import '../controllers/stop_session_controller.dart';
@@ -63,26 +64,26 @@ class _StopSessionScreenState extends ConsumerState<StopSessionScreen> {
         }
       },
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Phiên dừng'),
-          leading: IconButton(
-            icon: const Icon(Icons.close),
-            onPressed: () {
-              if (state.session?.status == StopSessionStatus.active) {
-                _showExitConfirmDialog(router);
-              } else {
-                router.go('/');
-              }
-            },
-          ),
-        ),
+        backgroundColor: AppColors.background,
         body: SafeArea(
-          child: Container(
-            color: AppColors.background,
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                Expanded(
+          child: Column(
+            children: [
+              AppPageHeader(
+                title: 'Phiên dừng',
+                leading: AppIconButton(
+                  icon: Icons.close,
+                  onTap: () {
+                    if (state.session?.status == StopSessionStatus.active) {
+                      _showExitConfirmDialog(router);
+                    } else {
+                      router.go('/');
+                    }
+                  },
+                ),
+              ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -94,10 +95,12 @@ class _StopSessionScreenState extends ConsumerState<StopSessionScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 24.0),
-                _buildActionButtons(state, notifier),
-              ],
-            ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: _buildActionButtons(state, notifier),
+              ),
+            ],
           ),
         ),
       ),

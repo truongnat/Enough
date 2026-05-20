@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fl_chart/fl_chart.dart';
 import '../../../../core/constants/app_constants.dart';
-import '../../../../core/constants/copywriting.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/widgets/app_card.dart';
+import '../../../../core/widgets/product_components.dart';
 import '../controllers/stats_controller.dart';
-import '../../../../app/router/app_router.dart';
 
 class StatsScreen extends ConsumerWidget {
   const StatsScreen({super.key});
@@ -15,182 +12,130 @@ class StatsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(statsControllerProvider);
-    final router = ref.watch(routerProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(Copywriting.statsLabel),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => router.go('/'),
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        child: Column(
+          children: [
+            const AppPageHeader(
+              title: 'Thống kê',
+              leading: SizedBox.shrink(), // No back button on main tab
+            ),
+            Expanded(
+              child: state.isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : state.weeklyStats == null
+                      ? const Center(child: Text('No data available', style: TextStyle(color: AppColors.textSecondary)))
+                      : SingleChildScrollView(
+                          padding: const EdgeInsets.all(AppConstants.paddingL),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildWeeklySummary(state),
+                              const SizedBox(height: AppConstants.paddingL),
+                              const AppSectionTitle(title: 'TỔNG QUAN TUẦN NÀY'),
+                              const SizedBox(height: 8.0),
+                              _buildStatsChart(state),
+                            ],
+                          ),
+                        ),
+            ),
+          ],
         ),
       ),
-      body: state.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : state.weeklyStats == null
-              ? const Center(child: Text('No data available'))
-              : SingleChildScrollView(
-                  padding: const EdgeInsets.all(AppConstants.paddingL),
-                  child: Column(
-                    children: [
-                      _buildWeeklySummary(state),
-                      const SizedBox(height: AppConstants.paddingL),
-                      _buildDailyChart(state),
-                    ],
-                  ),
-                ),
     );
   }
 
   Widget _buildWeeklySummary(StatsState state) {
     final stats = state.weeklyStats!;
-    
-    return AppCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            Copywriting.weeklySummary,
-            style: AppTextStyles.h4,
-          ),
-          const SizedBox(height: AppConstants.paddingL),
-          _buildStatRow(
-            Copywriting.totalStoppedLabel,
-            '${stats.totalStoppedCount}',
-            Icons.check_circle,
-            AppColors.success,
-          ),
-          const SizedBox(height: AppConstants.paddingM),
-          _buildStatRow(
-            Copywriting.totalProtectedLabel,
-            '${stats.totalProtectedTimeMinutes} ${Copywriting.minutesLabel}',
-            Icons.access_time,
-            AppColors.primary,
-          ),
-          const SizedBox(height: AppConstants.paddingM),
-          _buildStatRow(
-            Copywriting.successRateLabel,
-            '${stats.successRate.round()}%',
-            Icons.trending_up,
-            AppColors.success,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatRow(String label, String value, IconData icon, Color color) {
     return Row(
       children: [
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(AppConstants.radiusM),
-          ),
-          child: Icon(icon, color: color, size: 20),
-        ),
-        const SizedBox(width: AppConstants.paddingM),
         Expanded(
-          child: Text(
-            label,
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: AppColors.textSecondary,
+          child: AppSurfaceCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Tổng phiên dừng',
+                  style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                ),
+                const SizedBox(height: 4.0),
+                Text(
+                  '${stats.totalStoppedCount}',
+                  style: AppTextStyles.h2.copyWith(color: AppColors.primary),
+                ),
+              ],
             ),
           ),
         ),
-        Text(
-          value,
-          style: AppTextStyles.h3,
+        const SizedBox(width: 12.0),
+        Expanded(
+          child: AppSurfaceCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Thời gian bảo vệ',
+                  style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                ),
+                const SizedBox(height: 4.0),
+                Text(
+                  '${stats.totalProtectedTimeMinutes} m',
+                  style: AppTextStyles.h2.copyWith(color: AppColors.success),
+                ),
+              ],
+            ),
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildDailyChart(StatsState state) {
+  Widget _buildStatsChart(StatsState state) {
     final stats = state.weeklyStats!;
-    
-    return AppCard(
+    // Map day index logically (1 = T2, 2 = T3...)
+    final List<String> dayNames = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+    return AppSurfaceCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            Copywriting.dailyChartLabel,
-            style: AppTextStyles.h4,
+          const Text(
+            'Phân bố tần suất dừng',
+            style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold),
           ),
-          const SizedBox(height: AppConstants.paddingL),
-          SizedBox(
-            height: 200,
-            child: BarChart(
-              BarChartData(
-                alignment: BarChartAlignment.spaceAround,
-                maxY: _getMaxY(stats.dailyStoppedCounts),
-                barTouchData: BarTouchData(enabled: false),
-                titlesData: FlTitlesData(
-                  show: true,
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      getTitlesWidget: (value, meta) {
-                        final index = value.toInt();
-                        if (index >= 1 && index <= 7) {
-                          final dayNames = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
-                          return Padding(
-                            padding: const EdgeInsets.only(top: AppConstants.paddingS),
-                            child: Text(
-                              dayNames[index - 1],
-                              style: AppTextStyles.labelSmall.copyWith(
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                          );
-                        }
-                        return const SizedBox.shrink();
-                      },
+          const SizedBox(height: 16.0),
+          ...List.generate(7, (index) {
+            final dayNum = index + 1;
+            final count = stats.dailyStoppedCounts[dayNum] ?? 0;
+            final percentage = stats.totalStoppedCount == 0 ? 0.0 : count / stats.totalStoppedCount;
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6.0),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 32,
+                    child: Text(dayNames[index], style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                  ),
+                  Expanded(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(4.0),
+                      child: LinearProgressIndicator(
+                        value: percentage,
+                        backgroundColor: AppColors.cardBgElevated,
+                        color: AppColors.primary,
+                        minHeight: 8.0,
+                      ),
                     ),
                   ),
-                  leftTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  topTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  rightTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                ),
-                gridData: FlGridData(show: false),
-                borderData: FlBorderData(show: false),
-                barGroups: stats.dailyStoppedCounts.entries.map((entry) {
-                  final index = entry.key;
-                  final count = entry.value;
-                  return BarChartGroupData(
-                    x: index.toInt(),
-                    barRods: [
-                      BarChartRodData(
-                        toY: count.toDouble(),
-                        color: AppColors.primary,
-                        width: 16,
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(8),
-                          topRight: Radius.circular(8),
-                        ),
-                      ),
-                    ],
-                  );
-                }).toList(),
+                  const SizedBox(width: 12.0),
+                  Text('$count', style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 12)),
+                ],
               ),
-            ),
-          ),
+            );
+          }),
         ],
       ),
     );
-  }
-
-  double _getMaxY(Map<int, int> dailyCounts) {
-    if (dailyCounts.isEmpty) return 5;
-    final maxCount = dailyCounts.values.reduce((a, b) => a > b ? a : b);
-    return maxCount > 0 ? (maxCount + 1).toDouble() : 5;
   }
 }

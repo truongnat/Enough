@@ -203,20 +203,32 @@ class AlarmController extends StateNotifier<AlarmState> {
     }
   }
 
-  void loadAlarm(StopAlarm alarm) {
-    state = state.copyWith(
-      alarmId: alarm.id,
-      title: alarm.title,
-      stopType: alarm.stopType,
-      customTypeLabel: alarm.customTypeLabel,
-      hour: alarm.timeOfDayHour,
-      minute: alarm.timeOfDayMinute,
-      repeatDays: alarm.repeatDays,
-      mode: alarm.mode,
-      protocolId: alarm.protocolId,
-      isEnabled: alarm.isEnabled,
-      createdAt: alarm.createdAt,
-    );
+  void resetState() {
+    state = AlarmState.initial();
+  }
+
+  Future<void> loadAlarm(String alarmId) async {
+    state = state.copyWith(isSaving: true, error: null);
+    try {
+      final alarms = await _repository.getAlarms();
+      final alarm = alarms.firstWhere((a) => a.id == alarmId);
+      state = state.copyWith(
+        alarmId: alarm.id,
+        title: alarm.title,
+        stopType: alarm.stopType,
+        customTypeLabel: alarm.customTypeLabel,
+        hour: alarm.timeOfDayHour,
+        minute: alarm.timeOfDayMinute,
+        repeatDays: alarm.repeatDays,
+        mode: alarm.mode,
+        protocolId: alarm.protocolId,
+        isEnabled: alarm.isEnabled,
+        createdAt: alarm.createdAt,
+        isSaving: false,
+      );
+    } catch (e) {
+      state = state.copyWith(isSaving: false, error: e.toString());
+    }
   }
 
   void reset() {

@@ -4,11 +4,15 @@ import 'app_text_styles.dart';
 
 class AppTheme {
   static ThemeData get lightTheme {
+    return darkTheme;
+  }
+
+  static ThemeData get darkTheme {
     return ThemeData(
       useMaterial3: true,
       colorScheme: ColorScheme.fromSeed(
         seedColor: AppColors.primary,
-        brightness: Brightness.light,
+        brightness: Brightness.dark,
         primary: AppColors.primary,
       ),
       scaffoldBackgroundColor: AppColors.background,
@@ -20,76 +24,6 @@ class AppTheme {
       ),
       cardTheme: CardThemeData(
         color: AppColors.cardBg,
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-      ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: AppColors.background,
-          padding: const EdgeInsets.symmetric(
-            horizontal: 24,
-            vertical: 16,
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          textStyle: AppTextStyles.labelLarge,
-        ),
-      ),
-      outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.primary,
-          padding: const EdgeInsets.symmetric(
-            horizontal: 24,
-            vertical: 16,
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: const BorderSide(color: AppColors.border),
-          ),
-          textStyle: AppTextStyles.labelLarge,
-        ),
-      ),
-      bottomNavigationBarTheme: BottomNavigationBarThemeData(
-        backgroundColor: AppColors.background,
-        selectedItemColor: AppColors.primary,
-        unselectedItemColor: AppColors.textTertiary,
-        selectedLabelStyle: AppTextStyles.labelSmall,
-        unselectedLabelStyle: AppTextStyles.labelSmall,
-        type: BottomNavigationBarType.fixed,
-        elevation: 0,
-      ),
-      textTheme: TextTheme(
-        bodyLarge: AppTextStyles.bodyLarge,
-        bodyMedium: AppTextStyles.bodyMedium,
-        bodySmall: AppTextStyles.bodySmall,
-        labelLarge: AppTextStyles.labelLarge,
-        labelMedium: AppTextStyles.labelMedium,
-        labelSmall: AppTextStyles.labelSmall,
-      ),
-    );
-  }
-
-  static ThemeData get darkTheme {
-    return ThemeData(
-      useMaterial3: true,
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: AppColors.primary,
-        brightness: Brightness.dark,
-        primary: AppColors.primary,
-      ),
-      scaffoldBackgroundColor: AppColors.backgroundDark,
-      appBarTheme: AppBarTheme(
-        backgroundColor: AppColors.backgroundDark,
-        elevation: 0,
-        centerTitle: true,
-        titleTextStyle: AppTextStyles.h3,
-      ),
-      cardTheme: CardThemeData(
-        color: AppColors.cardBgDark,
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
