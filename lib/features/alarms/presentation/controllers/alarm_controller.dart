@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import '../../domain/entities/stop_alarm.dart';
@@ -177,6 +178,8 @@ class AlarmController extends StateNotifier<AlarmState> {
 
       await _notificationService.rescheduleAll(await _repository.getAlarms());
 
+      debugPrint('[AlarmController] Saved alarm id=${alarm.id}, enabled=${alarm.isEnabled}, time=${alarm.timeOfDayHour}:${alarm.timeOfDayMinute}, repeatDaysCount=${alarm.repeatDays.length}');
+
       state = state.copyWith(
         isSaving: false,
         isSaved: true,
@@ -185,6 +188,7 @@ class AlarmController extends StateNotifier<AlarmState> {
       );
       return true;
     } catch (e) {
+      debugPrint('[AlarmController] Error saving alarm: $e');
       state = state.copyWith(
         isSaving: false,
         isSaved: false,
@@ -198,7 +202,9 @@ class AlarmController extends StateNotifier<AlarmState> {
     try {
       await _repository.deleteAlarm(alarmId);
       await _notificationService.cancelStopAlarm(alarmId);
+      debugPrint('[AlarmController] Deleted alarm id=$alarmId');
     } catch (e) {
+      debugPrint('[AlarmController] Error deleting alarm: $e');
       state = state.copyWith(error: e.toString());
     }
   }

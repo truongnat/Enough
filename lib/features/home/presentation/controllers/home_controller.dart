@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/usecases/get_next_alarm.dart';
 import '../../domain/usecases/get_today_stats.dart';
@@ -27,21 +28,25 @@ class HomeController extends StateNotifier<HomeState> {
       final stats = await _getTodayStats();
       final latestReceipt = await _getLatestReceipt();
       
+      debugPrint('[HomeController] Loaded data. NextAlarm: ${nextAlarm?.id ?? 'null'} (${nextAlarm?.timeOfDayHour}:${nextAlarm?.timeOfDayMinute}), StoppedCount: ${stats['stoppedCount']}, LatestReceipt: ${latestReceipt?.id ?? 'null'}');
+
       state = state.copyWith(
         nextAlarm: nextAlarm,
         stoppedCount: stats['stoppedCount'] ?? 0,
         latestReceipt: latestReceipt,
         isLoading: false,
+        error: null,
       );
     } catch (e) {
+      debugPrint('[HomeController] Error loading data: $e');
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
 
-  void refresh() {
-    loadData();
-  }
+  Future<void> refresh() => loadData();
 }
+
+const _unset = Object();
 
 class HomeState {
   final StopAlarm? nextAlarm;
@@ -69,18 +74,22 @@ class HomeState {
   }
 
   HomeState copyWith({
-    StopAlarm? nextAlarm,
+    Object? nextAlarm = _unset,
     int? stoppedCount,
-    StopReceipt? latestReceipt,
+    Object? latestReceipt = _unset,
     bool? isLoading,
-    String? error,
+    Object? error = _unset,
   }) {
     return HomeState(
-      nextAlarm: nextAlarm ?? this.nextAlarm,
+      nextAlarm: identical(nextAlarm, _unset)
+          ? this.nextAlarm
+          : nextAlarm as StopAlarm?,
       stoppedCount: stoppedCount ?? this.stoppedCount,
-      latestReceipt: latestReceipt ?? this.latestReceipt,
+      latestReceipt: identical(latestReceipt, _unset)
+          ? this.latestReceipt
+          : latestReceipt as StopReceipt?,
       isLoading: isLoading ?? this.isLoading,
-      error: error,
+      error: identical(error, _unset) ? this.error : error as String?,
     );
   }
 }

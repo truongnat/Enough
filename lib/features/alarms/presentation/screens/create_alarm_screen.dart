@@ -68,8 +68,10 @@ class _CreateAlarmScreenState extends ConsumerState<CreateAlarmScreen> {
                       onTap: () async {
                         final success = await notifier.saveAlarm();
                         if (success && context.mounted) {
-                          ref.read(homeControllerProvider.notifier).refresh();
-                          context.pop();
+                          await ref.read(homeControllerProvider.notifier).refresh();
+                          if (context.mounted) {
+                            context.pop();
+                          }
                         }
                       },
                     ),

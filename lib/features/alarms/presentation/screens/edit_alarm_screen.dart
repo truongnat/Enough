@@ -77,8 +77,10 @@ class _EditAlarmScreenState extends ConsumerState<EditAlarmScreen> {
                     if (confirm == true && context.mounted) {
                       await notifier.deleteAlarm(widget.alarmId);
                       if (context.mounted) {
-                        ref.read(homeControllerProvider.notifier).refresh();
-                        context.pop();
+                        await ref.read(homeControllerProvider.notifier).refresh();
+                        if (context.mounted) {
+                          context.pop();
+                        }
                       }
                     }
                   },
@@ -109,8 +111,10 @@ class _EditAlarmScreenState extends ConsumerState<EditAlarmScreen> {
                       onTap: () async {
                         final success = await notifier.saveAlarm();
                         if (success && context.mounted) {
-                          ref.read(homeControllerProvider.notifier).refresh();
-                          context.pop();
+                          await ref.read(homeControllerProvider.notifier).refresh();
+                          if (context.mounted) {
+                            context.pop();
+                          }
                         }
                       },
                     ),
