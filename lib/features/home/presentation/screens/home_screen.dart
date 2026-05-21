@@ -31,19 +31,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(AppConstants.paddingL),
+          padding: const EdgeInsets.symmetric(horizontal: AppConstants.paddingL, vertical: AppConstants.paddingM),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildGreeting(),
-              const SizedBox(height: AppConstants.paddingXL),
+              const SizedBox(height: AppConstants.paddingL),
               if (homeState.isLoading)
-                const Center(child: CircularProgressIndicator())
+                const Expanded(child: Center(child: CircularProgressIndicator()))
               else
                 Expanded(
                   child: ListView(
+                    physics: const BouncingScrollPhysics(),
                     children: [
                       _buildNextAlarmCard(homeState),
+                      const SizedBox(height: AppConstants.paddingL),
+                      _buildAllAlarmsSection(homeState),
                       const SizedBox(height: AppConstants.paddingL),
                       _buildTodayCard(homeState),
                       const SizedBox(height: AppConstants.paddingL),
@@ -56,6 +59,119 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildAllAlarmsSection(HomeState state) {
+    final alarms = state.alarms;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const AppSectionTitle(title: 'TẤT CẢ BÁO THỨC'),
+        const SizedBox(height: 8.0),
+        if (alarms.isEmpty)
+          AppSurfaceCard(
+            child: EmptyState(
+              message: 'Chưa có báo thức nào được tạo.',
+              actionLabel: 'Tạo báo thức đầu tiên',
+              onAction: () => context.push('/alarm/create'),
+              icon: Icons.alarm_add_outlined,
+            ),
+          )
+        else
+          ...alarms.map((alarm) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8.0),
+              child: AppSurfaceCard(
+                onTap: () => context.push('/alarm/edit/${alarm.id}'),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            textBaseline: TextBaseline.alphabetic,
+                            crossAxisAlignment: CrossAxisAlignment.baseline,
+                            children: [
+                              Text(
+                                alarm.formattedTime,
+                                style: AppTextStyles.h2.copyWith(fontWeight: FontWeight.bold),
+                              ),
+                              const SizedBox(width: 8.0),
+                              Text(
+                                _getRepeatSummary(alarm.repeatDays),
+                                style: AppTextStyles.bodySmall.copyWith(
+                                  color: AppColors.textSecondary,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4.0),
+                          Text(
+                            alarm.stopType.displayName,
+                            style: AppTextStyles.bodyMedium.copyWith(
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12.0),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                      decoration: BoxDecoration(
+                        color: alarm.isEnabled
+                            ? AppColors.primary.withValues(alpha: 0.1)
+                            : AppColors.cardBgElevated,
+                        borderRadius: BorderRadius.circular(8.0),
+                        border: Border.all(
+                          color: alarm.isEnabled ? AppColors.primary : AppColors.border,
+                        ),
+                      ),
+                      child: Text(
+                        alarm.isEnabled ? 'BẬT' : 'TẮT',
+                        style: AppTextStyles.labelSmall.copyWith(
+                          color: alarm.isEnabled ? AppColors.primary : AppColors.textTertiary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }),
+      ],
+    );
+  }
+
+  String _getRepeatSummary(List<dynamic> repeatDays) {
+    if (repeatDays.isEmpty) return 'Một lần';
+    if (repeatDays.length == 7) return 'Hàng ngày';
+    
+    // Check if it's weekdays (Monday to Friday)
+    final isoValues = repeatDays.map((d) => d.isoValue as int).toList()..sort();
+    if (isoValues.length == 5 &&
+        isoValues[0] == 1 &&
+        isoValues[1] == 2 &&
+        isoValues[2] == 3 &&
+        isoValues[3] == 4 &&
+        isoValues[4] == 5) {
+      return 'Ngày thường';
+    }
+
+    // Check if it's weekend (Saturday and Sunday)
+    if (isoValues.length == 2 && isoValues[0] == 6 && isoValues[1] == 7) {
+      return 'Cuối tuần';
+    }
+
+    // Otherwise show short names comma separated
+    final List<String> shorts = repeatDays.map((d) => d.shortName as String).toList();
+    return shorts.join(', ');
   }
 
   Widget _buildGreeting() {
