@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/constants/app_constants.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/product_components.dart';
@@ -15,125 +14,161 @@ class StatsScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Column(
-          children: [
-            const AppPageHeader(
-              title: 'Thống kê',
-              leading: SizedBox.shrink(), // No back button on main tab
-            ),
-            Expanded(
-              child: state.isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : state.weeklyStats == null
-                      ? const Center(child: Text('No data available', style: TextStyle(color: AppColors.textSecondary)))
-                      : SingleChildScrollView(
-                          padding: const EdgeInsets.all(AppConstants.paddingL),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+      body: AppGradientBackground(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: SafeArea(
+          bottom: false,
+          child: Column(
+            children: [
+              const AppPageHeader(
+                title: 'Thống kê',
+                leading: SizedBox(width: 44, height: 44),
+              ),
+              Expanded(
+                child: state.isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : state.weeklyStats == null
+                        ? Center(
+                            child: Text(
+                              'No data available',
+                              style: AppTextStyles.bodyLarge.copyWith(
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          )
+                        : ListView(
+                            physics: const BouncingScrollPhysics(),
+                            padding: const EdgeInsets.only(top: 10, bottom: 120),
                             children: [
-                              _buildWeeklySummary(state),
-                              const SizedBox(height: AppConstants.paddingL),
-                              const AppSectionTitle(title: 'TỔNG QUAN TUẦN NÀY'),
-                              const SizedBox(height: 8.0),
-                              _buildStatsChart(state),
+                              _buildSummary(state),
+                              const SizedBox(height: 18),
+                              _buildChart(state),
                             ],
                           ),
-                        ),
-            ),
-          ],
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildWeeklySummary(StatsState state) {
+  Widget _buildSummary(StatsState state) {
     final stats = state.weeklyStats!;
-    return Row(
-      children: [
-        Expanded(
-          child: AppSurfaceCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Tổng phiên dừng',
-                  style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
-                ),
-                const SizedBox(height: 4.0),
-                Text(
+    final protectedHours = stats.totalProtectedTimeMinutes ~/ 60;
+    final protectedMinutes = stats.totalProtectedTimeMinutes % 60;
+
+    return AppGlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Thống kê tuần này', style: AppTextStyles.h3),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _metric(
                   '${stats.totalStoppedCount}',
-                  style: AppTextStyles.h2.copyWith(color: AppColors.primary),
+                  'Lần đã dừng',
+                  AppColors.primary,
                 ),
-              ],
-            ),
+              ),
+              Expanded(
+                child: _metric(
+                  '${protectedHours}h ${protectedMinutes}m',
+                  'Năng lượng bảo vệ',
+                  AppColors.warning,
+                ),
+              ),
+              Expanded(
+                child: _metric(
+                  '${stats.successRate.round()}%',
+                  'Tỷ lệ thành công',
+                  AppColors.success,
+                ),
+              ),
+            ],
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _metric(String value, String label, Color color) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          value,
+          style: AppTextStyles.h3.copyWith(color: color),
         ),
-        const SizedBox(width: 12.0),
-        Expanded(
-          child: AppSurfaceCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Thời gian bảo vệ',
-                  style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
-                ),
-                const SizedBox(height: 4.0),
-                Text(
-                  '${stats.totalProtectedTimeMinutes} m',
-                  style: AppTextStyles.h2.copyWith(color: AppColors.success),
-                ),
-              ],
-            ),
-          ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
         ),
       ],
     );
   }
 
-  Widget _buildStatsChart(StatsState state) {
+  Widget _buildChart(StatsState state) {
     final stats = state.weeklyStats!;
-    // Map day index logically (1 = T2, 2 = T3...)
-    final List<String> dayNames = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
-    return AppSurfaceCard(
+    final maxCount = stats.dailyStoppedCounts.values
+        .fold<int>(0, (max, value) => value > max ? value : max);
+    final labels = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+
+    return AppGlassCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Phân bố tần suất dừng',
-            style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16.0),
-          ...List.generate(7, (index) {
-            final dayNum = index + 1;
-            final count = stats.dailyStoppedCounts[dayNum] ?? 0;
-            final percentage = stats.totalStoppedCount == 0 ? 0.0 : count / stats.totalStoppedCount;
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6.0),
-              child: Row(
-                children: [
-                  SizedBox(
-                    width: 32,
-                    child: Text(dayNames[index], style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
-                  ),
-                  Expanded(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(4.0),
-                      child: LinearProgressIndicator(
-                        value: percentage,
-                        backgroundColor: AppColors.cardBgElevated,
-                        color: AppColors.primary,
-                        minHeight: 8.0,
-                      ),
+          Text('Nhịp dừng trong tuần', style: AppTextStyles.h4),
+          const SizedBox(height: 18),
+          SizedBox(
+            height: 180,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: List.generate(7, (index) {
+                final day = index + 1;
+                final count = stats.dailyStoppedCounts[day] ?? 0;
+                final factor =
+                    maxCount == 0 ? 0.12 : (count / maxCount).clamp(0.12, 1.0);
+                final isHighlight = count == maxCount && count > 0;
+                return Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Text(
+                          '$count',
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
+                          height: 96 * factor + 12,
+                          decoration: BoxDecoration(
+                            color: isHighlight
+                                ? AppColors.warning
+                                : AppColors.success.withValues(alpha: 0.82),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          labels[index],
+                          style: AppTextStyles.labelSmall.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(width: 12.0),
-                  Text('$count', style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 12)),
-                ],
-              ),
-            );
-          }),
+                );
+              }),
+            ),
+          ),
         ],
       ),
     );

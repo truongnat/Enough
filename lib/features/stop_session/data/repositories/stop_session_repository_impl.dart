@@ -1,5 +1,6 @@
 import '../../domain/entities/stop_session.dart';
 import '../../domain/repositories/stop_session_repository.dart';
+import '../../../../core/utils/logger.dart';
 import '../datasources/stop_session_local_datasource.dart';
 import '../models/stop_session_model.dart';
 
@@ -13,7 +14,12 @@ class StopSessionRepositoryImpl implements StopSessionRepository {
     try {
       return await datasource.getAllSessions();
     } catch (e) {
-      print('[StopSessionRepository] Error getting sessions: $e');
+      AppLogger.error(
+        'Error getting sessions',
+        e,
+        null,
+        'StopSessionRepository',
+      );
       rethrow;
     }
   }
@@ -24,7 +30,7 @@ class StopSessionRepositoryImpl implements StopSessionRepository {
       final sessionJson = StopSessionModel.toJson(session);
       await datasource.saveSession(session.id, sessionJson);
     } catch (e) {
-      print('[StopSessionRepository] Error saving session: $e');
+      AppLogger.error('Error saving session', e, null, 'StopSessionRepository');
       rethrow;
     }
   }
@@ -34,7 +40,12 @@ class StopSessionRepositoryImpl implements StopSessionRepository {
     try {
       await datasource.deleteSession(sessionId);
     } catch (e) {
-      print('[StopSessionRepository] Error deleting session: $e');
+      AppLogger.error(
+        'Error deleting session',
+        e,
+        null,
+        'StopSessionRepository',
+      );
       rethrow;
     }
   }
@@ -45,7 +56,10 @@ class StopSessionRepositoryImpl implements StopSessionRepository {
       final sessions = await getSessions();
       return sessions.firstWhere((s) => s.id == sessionId);
     } catch (e) {
-      print('[StopSessionRepository] Session not found: $sessionId');
+      AppLogger.warning(
+        'Session not found: $sessionId',
+        'StopSessionRepository',
+      );
       return null;
     }
   }
@@ -56,7 +70,12 @@ class StopSessionRepositoryImpl implements StopSessionRepository {
       final sessions = await getSessions();
       return sessions.where((s) => s.alarmId == alarmId).toList();
     } catch (e) {
-      print('[StopSessionRepository] Error getting sessions by alarmId: $e');
+      AppLogger.error(
+        'Error getting sessions by alarmId',
+        e,
+        null,
+        'StopSessionRepository',
+      );
       rethrow;
     }
   }

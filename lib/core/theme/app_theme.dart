@@ -16,6 +16,7 @@ class AppTheme {
         primary: AppColors.primary,
       ),
       scaffoldBackgroundColor: AppColors.background,
+      brightness: Brightness.dark,
       appBarTheme: AppBarTheme(
         backgroundColor: AppColors.background,
         elevation: 0,
@@ -26,7 +27,7 @@ class AppTheme {
         color: AppColors.cardBg,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(24),
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
@@ -36,7 +37,7 @@ class AppTheme {
           elevation: 0,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(22),
           ),
           textStyle: AppTextStyles.labelLarge,
         ),
@@ -44,10 +45,10 @@ class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.primary,
-          side: const BorderSide(color: AppColors.primary, width: 2),
+          side: BorderSide(color: AppColors.primary.withValues(alpha: 0.65), width: 1.4),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(22),
           ),
           textStyle: AppTextStyles.labelLarge,
         ),
@@ -63,26 +64,26 @@ class AppTheme {
         filled: true,
         fillColor: AppColors.cardBgElevated,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(22),
           borderSide: const BorderSide(color: AppColors.border),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(22),
           borderSide: const BorderSide(color: AppColors.border),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(22),
           borderSide: const BorderSide(color: AppColors.primary, width: 2),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(22),
           borderSide: const BorderSide(color: AppColors.error),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         hintStyle: AppTextStyles.bodySecondary(AppColors.textSecondary),
       ),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
-        backgroundColor: AppColors.cardBg,
+        backgroundColor: AppColors.cardBgGlass,
         selectedItemColor: AppColors.primary,
         unselectedItemColor: AppColors.textTertiary,
         type: BottomNavigationBarType.fixed,

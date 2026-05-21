@@ -1,65 +1,166 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../responsive/responsive.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 
 class MainScaffold extends StatelessWidget {
   final StatefulNavigationShell navigationShell;
 
-  const MainScaffold({
-    super.key,
-    required this.navigationShell,
+  const MainScaffold({super.key, required this.navigationShell});
+
+  @override
+  Widget build(BuildContext context) {
+    final compact = Responsive.compactMode(context);
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
+    final navHeight = compact ? 82.0 : 88.0;
+    return Scaffold(
+      body: navigationShell,
+      extendBody: true,
+      bottomNavigationBar: SafeArea(
+        top: false,
+        minimum: EdgeInsets.fromLTRB(16, 0, 16, compact ? 12 : 16),
+        child: SizedBox(
+          height: navHeight + bottomInset * 0.15,
+          child: Stack(
+            alignment: Alignment.topCenter,
+            children: [
+              Positioned.fill(
+                top: compact ? 14 : 16,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.cardBgGlass,
+                    borderRadius: BorderRadius.circular(28),
+                    border: Border.all(color: AppColors.border),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.28),
+                        blurRadius: 28,
+                        offset: const Offset(0, 14),
+                      ),
+                    ],
+                  ),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: compact ? 10 : 14,
+                    vertical: compact ? 6 : 8,
+                  ),
+                  child: Row(
+                    children: [
+                      _NavItem(
+                        icon: Icons.home_rounded,
+                        label: 'Trang chủ',
+                        isActive: navigationShell.currentIndex == 0,
+                        onTap: () => _goBranch(0),
+                      ),
+                      _NavItem(
+                        icon: Icons.history_rounded,
+                        label: 'Lịch sử',
+                        isActive: navigationShell.currentIndex == 1,
+                        onTap: () => _goBranch(1),
+                      ),
+                      const SizedBox(width: 74),
+                      _NavItem(
+                        icon: Icons.bar_chart_rounded,
+                        label: 'Thống kê',
+                        isActive: navigationShell.currentIndex == 2,
+                        onTap: () => _goBranch(2),
+                      ),
+                      _NavItem(
+                        icon: Icons.settings_rounded,
+                        label: 'Cài đặt',
+                        isActive: navigationShell.currentIndex == 3,
+                        onTap: () => _goBranch(3),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              GestureDetector(
+                onTap: () => context.push('/alarm/create'),
+                child: Container(
+                  width: compact ? 58 : 64,
+                  height: compact ? 58 : 64,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: const LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [AppColors.primaryLight, AppColors.primary],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withValues(alpha: 0.35),
+                        blurRadius: 24,
+                        offset: const Offset(0, 14),
+                      ),
+                    ],
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.12),
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.add_rounded,
+                    size: 30,
+                    color: AppColors.background,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _goBranch(int index) {
+    navigationShell.goBranch(
+      index,
+      initialLocation: index == navigationShell.currentIndex,
+    );
+  }
+}
+
+class _NavItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool isActive;
+  final VoidCallback onTap;
+
+  const _NavItem({
+    required this.icon,
+    required this.label,
+    required this.isActive,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: navigationShell,
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          border: Border(
-            top: BorderSide(color: AppColors.border, width: 1.0),
+    final compact = Responsive.compactMode(context);
+    final color = isActive ? AppColors.primary : AppColors.textTertiary;
+    return Expanded(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: compact ? 3 : 4),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, color: color, size: compact ? 18 : 20),
+              const SizedBox(height: 2),
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTextStyles.labelSmall.copyWith(
+                  color: color,
+                  fontSize: compact ? 8.5 : 9,
+                  height: 1.0,
+                ),
+              ),
+            ],
           ),
-        ),
-        child: BottomNavigationBar(
-          currentIndex: navigationShell.currentIndex,
-          onTap: (index) {
-            navigationShell.goBranch(
-              index,
-              initialLocation: index == navigationShell.currentIndex,
-            );
-          },
-          backgroundColor: AppColors.background,
-          selectedItemColor: AppColors.primary,
-          unselectedItemColor: AppColors.textTertiary,
-          type: BottomNavigationBarType.fixed,
-          elevation: 0,
-          selectedLabelStyle: AppTextStyles.labelSmall.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
-          unselectedLabelStyle: AppTextStyles.labelSmall,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined),
-              activeIcon: Icon(Icons.home),
-              label: 'Trang chủ',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.history_outlined),
-              activeIcon: Icon(Icons.history),
-              label: 'Lịch sử',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.bar_chart_outlined),
-              activeIcon: Icon(Icons.bar_chart),
-              label: 'Thống kê',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.settings_outlined),
-              activeIcon: Icon(Icons.settings),
-              label: 'Cài đặt',
-            ),
-          ],
         ),
       ),
     );

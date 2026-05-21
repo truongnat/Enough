@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/responsive/responsive.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/product_components.dart';
 import '../../../../core/widgets/receipt_widget.dart';
 import '../controllers/receipts_controller.dart';
-import '../../../../app/router/app_router.dart';
 
 class ReceiptDetailScreen extends ConsumerWidget {
   final String receiptId;
@@ -15,7 +17,8 @@ class ReceiptDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(receiptsControllerProvider);
     final notifier = ref.read(receiptsControllerProvider.notifier);
-    final router = ref.watch(routerProvider);
+    final horizontalPadding = Responsive.horizontalPadding(context);
+    final compact = Responsive.compactMode(context);
 
     final receipt = state.receipts.firstWhere(
       (r) => r.id == receiptId,
@@ -23,21 +26,73 @@ class ReceiptDetailScreen extends ConsumerWidget {
     );
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Biên lai'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => router.go('/'),
-        ),
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
+      backgroundColor: AppColors.background,
+      body: AppGradientBackground(
+        padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+        child: SafeArea(
+          bottom: true,
           child: Column(
             children: [
-              ReceiptWidget(
-                receipt: receipt,
-                onDelete: () => _showDeleteDialog(context, notifier, receipt.id),
+              AppPageHeader(
+                title: 'Stop Receipt',
+                actions: [
+                  AppRoundIconButton(
+                    icon: Icons.delete_outline_rounded,
+                    color: AppColors.error,
+                    onTap: () =>
+                        _showDeleteDialog(context, notifier, receipt.id),
+                  ),
+                ],
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: EdgeInsets.only(top: 12, bottom: compact ? 18 : 24),
+                  child: Column(
+                    children: [
+                      const SizedBox(width: double.infinity),
+                      ReceiptWidget(receipt: receipt),
+                      const SizedBox(height: 18),
+                      AppBottomActionBar(
+                        children: [
+                          _ActionItem(
+                            icon: Icons.share_outlined,
+                            label: 'Chia sẻ',
+                            onTap: () =>
+                                _showTodo(context, 'TODO: chia sẻ receipt'),
+                          ),
+                          _ActionItem(
+                            icon: Icons.download_outlined,
+                            label: 'Lưu ảnh',
+                            onTap: () => _showTodo(
+                              context,
+                              'TODO: lưu receipt thành ảnh',
+                            ),
+                          ),
+                          _ActionItem(
+                            icon: Icons.delete_outline_rounded,
+                            label: 'Xóa',
+                            onTap: () => _showDeleteDialog(
+                              context,
+                              notifier,
+                              receipt.id,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        'Share và lưu ảnh vẫn là TODO visual-only ở pass này.',
+                        maxLines: compact ? 2 : 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),
@@ -46,17 +101,18 @@ class ReceiptDetailScreen extends ConsumerWidget {
     );
   }
 
-  void _showDeleteDialog(BuildContext context, ReceiptsController notifier, String receiptId) {
+  void _showDeleteDialog(
+    BuildContext context,
+    ReceiptsController notifier,
+    String receiptId,
+  ) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Xóa biên lai'),
         content: const Text('Bạn có chắc muốn xóa biên lai này?'),
         actions: [
-          TextButton(
-            onPressed: () => context.pop(),
-            child: const Text('Hủy'),
-          ),
+          TextButton(onPressed: () => context.pop(), child: const Text('Hủy')),
           TextButton(
             onPressed: () {
               notifier.deleteReceipt(receiptId);
@@ -64,6 +120,48 @@ class ReceiptDetailScreen extends ConsumerWidget {
               context.pop();
             },
             child: const Text('Xóa', style: TextStyle(color: AppColors.error)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showTodo(BuildContext context, String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+}
+
+class _ActionItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _ActionItem({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final compact = Responsive.compactMode(context);
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: AppColors.textPrimary),
+          const SizedBox(height: 6),
+          Text(
+            label,
+            maxLines: compact ? 2 : 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: AppTextStyles.bodySmall.copyWith(
+              color: AppColors.textSecondary,
+            ),
           ),
         ],
       ),

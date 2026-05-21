@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../app/router/app_router.dart';
 import '../../../../core/constants/copywriting.dart';
+import '../../../../core/responsive/responsive.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/product_components.dart';
+import '../../../../services/alarm_runtime/alarm_runtime_controller.dart';
 import '../../../alarms/domain/entities/stop_mode.dart';
+import '../../../alarms/domain/entities/stop_type.dart';
 import '../../../stop_session/domain/entities/stop_session_status.dart';
 import '../controllers/stop_session_controller.dart';
-import '../../../../app/router/app_router.dart';
 
 class StopSessionScreen extends ConsumerStatefulWidget {
   final String? alarmId;
@@ -24,7 +27,12 @@ class _StopSessionScreenState extends ConsumerState<StopSessionScreen> {
   void initState() {
     super.initState();
     Future.microtask(() {
-      ref.read(stopSessionControllerProvider.notifier).loadSession(widget.alarmId);
+      ref
+          .read(alarmRuntimeControllerProvider.notifier)
+          .dismissModal(stopRinging: true);
+      ref
+          .read(stopSessionControllerProvider.notifier)
+          .loadSession(widget.alarmId);
     });
   }
 
@@ -33,27 +41,46 @@ class _StopSessionScreenState extends ConsumerState<StopSessionScreen> {
     final state = ref.watch(stopSessionControllerProvider);
     final notifier = ref.read(stopSessionControllerProvider.notifier);
     final router = ref.watch(routerProvider);
+    final horizontalPadding = Responsive.horizontalPadding(context);
+    final compact = Responsive.compactMode(context);
 
     if (state.isLoading) {
       return const Scaffold(
+        backgroundColor: AppColors.background,
         body: Center(child: CircularProgressIndicator()),
       );
     }
 
     if (state.error != null) {
       return Scaffold(
+        backgroundColor: AppColors.background,
         body: Center(
-          child: Text('Error: ${state.error}'),
+          child: Text('Error: ${state.error}', style: AppTextStyles.bodyLarge),
         ),
       );
     }
 
     if (state.isCompleted) {
-      return _buildCompletionScreen(state, router);
+      return _buildResultState(
+        title: 'ĐÃ DỪNG THÀNH CÔNG!',
+        message: 'Cơ thể vẫn là con người. Não vẫn còn đủ pin cho ngày mai.',
+        icon: Icons.verified_rounded,
+        iconColor: AppColors.success,
+        actionLabel: 'Về trang chủ',
+        onTap: () => router.go('/'),
+      );
     }
 
     if (state.isSnoozed) {
-      return _buildSnoozeScreen(state, router);
+      return _buildResultState(
+        title: 'ĐÃ HOÃN',
+        message:
+            'Mày vừa xin thêm thời gian. Hy vọng lần tới là lần cuối cùng.',
+        icon: Icons.snooze_rounded,
+        iconColor: AppColors.warning,
+        actionLabel: 'Về trang chủ',
+        onTap: () => router.go('/'),
+      );
     }
 
     return PopScope(
@@ -65,136 +92,207 @@ class _StopSessionScreenState extends ConsumerState<StopSessionScreen> {
       },
       child: Scaffold(
         backgroundColor: AppColors.background,
-        body: SafeArea(
-          child: Column(
-            children: [
-              AppPageHeader(
-                title: 'Phiên dừng',
-                leading: AppIconButton(
-                  icon: Icons.close,
-                  onTap: () {
-                    if (state.session?.status == StopSessionStatus.active) {
-                      _showExitConfirmDialog(router);
-                    } else {
-                      router.go('/');
-                    }
-                  },
+        body: AppGradientBackground(
+          padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+          child: SafeArea(
+            bottom: true,
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    AppRoundIconButton(
+                      icon: Icons.close_rounded,
+                      onTap: () {
+                        if (state.session?.status == StopSessionStatus.active) {
+                          _showExitConfirmDialog(router);
+                        } else {
+                          router.go('/');
+                        }
+                      },
+                    ),
+                  ],
                 ),
-              ),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _buildTitle(state),
-                      const SizedBox(height: 16.0),
-                      _buildMessage(state),
-                      const SizedBox(height: 24.0),
-                      _buildProtocolChecklist(state, notifier),
-                    ],
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: EdgeInsets.only(
+                      top: compact ? 10 : 18,
+                      bottom: 24,
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          'ĐẾN GIỜ DỪNG!',
+                          style: AppTextStyles.overline.copyWith(
+                            color: AppColors.primary,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          _screenTitle(state).toUpperCase(),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyles.stopTitle.copyWith(
+                            fontSize: compact
+                                ? 32
+                                : AppTextStyles.stopTitle.fontSize,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        SizedBox(height: compact ? 14 : 18),
+                        Center(
+                          child: AppIllustrationPlaceholder(
+                            icon: _stopTypeIcon(
+                              state.alarm?.stopType ?? StopType.custom,
+                            ),
+                            label: 'TODO(ui-assets)\nalarm illustration',
+                            width: compact ? 180 : 220,
+                            height: compact ? 160 : 220,
+                          ),
+                        ),
+                        SizedBox(height: compact ? 14 : 18),
+                        AppGlassCard(
+                          child: Text(
+                            _quoteForState(state),
+                            maxLines: compact ? 4 : 5,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTextStyles.bodyLarge.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: compact ? 14 : 18),
+                        _buildProtocolCard(context, state, notifier),
+                        SizedBox(height: compact ? 18 : 22),
+                        AppPrimaryButton(
+                          label: 'Tôi đã dừng lại!',
+                          onTap: state.session?.canComplete == true
+                              ? () => notifier.completeSession()
+                              : null,
+                        ),
+                        const SizedBox(height: 12),
+                        AppSecondaryButton(
+                          label: 'Cho tôi thêm 10 phút nữa...',
+                          onTap: () => notifier.snoozeSession(),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Đây là lần thứ ${state.session?.snoozeCount ?? 0} bạn snooze hôm nay.',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: _buildActionButtons(state, notifier),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildTitle(StopSessionState state) {
-    final stopType = state.session?.stopType ?? state.alarm?.stopType;
-    if (stopType == null) return const SizedBox.shrink();
-    
-    return Text(
-      Copywriting.getStopSessionTitle(stopType.displayName.toUpperCase()),
-      style: AppTextStyles.stopTitle,
-      textAlign: TextAlign.center,
-    );
-  }
-
-  Widget _buildMessage(StopSessionState state) {
-    final mode = state.alarm?.mode ?? StopMode.gentle;
-    final message = Copywriting.getStopSessionMessage(mode.name);
-    
-    return Container(
-      padding: const EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        color: AppColors.cardBgElevated,
-        borderRadius: BorderRadius.circular(16.0),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Text(
-        message,
-        style: AppTextStyles.bodyMedium.copyWith(
-          color: AppColors.textSecondary,
-        ),
-        textAlign: TextAlign.center,
-      ),
-    );
-  }
-
-  Widget _buildProtocolChecklist(StopSessionState state, StopSessionController notifier) {
+  Widget _buildProtocolCard(
+    BuildContext context,
+    StopSessionState state,
+    StopSessionController notifier,
+  ) {
     final protocol = state.protocol;
     final session = state.session;
     if (protocol == null || session == null) return const SizedBox.shrink();
 
-    return Container(
-      padding: const EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        color: AppColors.cardBg,
-        borderRadius: BorderRadius.circular(16.0),
-        border: Border.all(color: AppColors.border),
-      ),
+    return AppGlassCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            Copywriting.protocolLabel,
-            style: AppTextStyles.labelLarge,
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Stop Coding Protocol',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.h4,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                '${session.checkedStepIndexes.length} / ${protocol.steps.length}',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTextStyles.labelMedium.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 12.0),
+          const SizedBox(height: 14),
           ...protocol.steps.asMap().entries.map((entry) {
             final index = entry.key;
             final step = entry.value;
             final isChecked = session.checkedStepIndexes.contains(index);
-            
-            return InkWell(
-              onTap: () => notifier.toggleStep(index),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8.0),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 24,
-                      height: 24,
-                      decoration: BoxDecoration(
-                        color: isChecked ? AppColors.success : AppColors.cardBgElevated,
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(
-                          color: isChecked ? AppColors.success : AppColors.border,
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: GestureDetector(
+                onTap: () => notifier.toggleStep(index),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.cardBgElevated,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 24,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: isChecked
+                              ? AppColors.success
+                              : AppColors.backgroundSecondary,
+                          border: Border.all(
+                            color: isChecked
+                                ? AppColors.success
+                                : AppColors.border,
+                          ),
+                        ),
+                        child: isChecked
+                            ? const Icon(
+                                Icons.check_rounded,
+                                size: 16,
+                                color: AppColors.background,
+                              )
+                            : null,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          step,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyles.bodyMedium.copyWith(
+                            color: isChecked
+                                ? AppColors.textTertiary
+                                : AppColors.textPrimary,
+                            decoration: isChecked
+                                ? TextDecoration.lineThrough
+                                : null,
+                          ),
                         ),
                       ),
-                      child: isChecked
-                          ? const Icon(Icons.check, size: 16, color: AppColors.background)
-                          : null,
-                    ),
-                    const SizedBox(width: 12.0),
-                    Expanded(
-                      child: Text(
-                        step,
-                        style: AppTextStyles.bodyMedium.copyWith(
-                          decoration: isChecked ? TextDecoration.lineThrough : null,
-                          color: isChecked ? AppColors.textTertiary : AppColors.textPrimary,
-                        ),
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             );
@@ -204,147 +302,102 @@ class _StopSessionScreenState extends ConsumerState<StopSessionScreen> {
     );
   }
 
-  Widget _buildActionButtons(StopSessionState state, StopSessionController notifier) {
-    final session = state.session;
-    final canComplete = session?.canComplete ?? false;
-
-    return Column(
-      children: [
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: canComplete ? () => notifier.completeSession() : null,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: canComplete ? AppColors.success : AppColors.cardBgElevated,
-              foregroundColor: canComplete ? AppColors.background : AppColors.textTertiary,
-            ),
-            child: Text(Copywriting.completeButton),
-          ),
-        ),
-        const SizedBox(height: 12.0),
-        SizedBox(
-          width: double.infinity,
-          child: OutlinedButton(
-            onPressed: () => notifier.snoozeSession(),
-            child: Text(Copywriting.snoozeButton),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCompletionScreen(StopSessionState state, GoRouter router) {
+  Widget _buildResultState({
+    required String title,
+    required String message,
+    required IconData icon,
+    required Color iconColor,
+    required String actionLabel,
+    required VoidCallback onTap,
+  }) {
+    final horizontalPadding = Responsive.horizontalPadding(context);
+    final compact = Responsive.compactMode(context);
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Column(
-          children: [
-            AppPageHeader(
-              title: 'Đã dừng',
-              leading: AppIconButton(
-                icon: Icons.close,
-                onTap: () => router.go('/'),
+      body: AppGradientBackground(
+        padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight:
+                    MediaQuery.sizeOf(context).height -
+                    MediaQuery.paddingOf(context).vertical,
               ),
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.check_circle,
-                      size: 100,
-                      color: AppColors.success,
-                    ),
-                    const SizedBox(height: 24.0),
-                    Text(
-                      'ĐÃ DỪNG THÀNH CÔNG!',
-                      style: AppTextStyles.h2,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 16.0),
-                    Text(
-                      Copywriting.getStopSessionMessage(StopMode.gentle.name),
-                      style: AppTextStyles.bodyMedium.copyWith(
-                        color: AppColors.textSecondary,
+              child: Center(
+                child: AppGlassCard(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(icon, size: compact ? 60 : 72, color: iconColor),
+                      const SizedBox(height: 18),
+                      Text(
+                        title,
+                        style: AppTextStyles.h2,
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 48.0),
-                    AppPrimaryButton(
-                      label: Copywriting.back,
-                      onTap: () => router.go('/'),
-                    ),
-                  ],
+                      const SizedBox(height: 10),
+                      Text(
+                        message,
+                        maxLines: compact ? 4 : 5,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.bodyLarge.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 24),
+                      AppPrimaryButton(label: actionLabel, onTap: onTap),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildSnoozeScreen(StopSessionState state, GoRouter router) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Column(
-          children: [
-            AppPageHeader(
-              title: 'Đã hoãn',
-              leading: AppIconButton(
-                icon: Icons.close,
-                onTap: () => router.go('/'),
-              ),
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.access_time,
-                      size: 100,
-                      color: AppColors.warning,
-                    ),
-                    const SizedBox(height: 24.0),
-                    Text(
-                      'ĐÃ HOÃN',
-                      style: AppTextStyles.h2,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 16.0),
-                    Text(
-                      Copywriting.snoozeWarning,
-                      style: AppTextStyles.bodyMedium.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 48.0),
-                    AppPrimaryButton(
-                      label: Copywriting.back,
-                      onTap: () => router.go('/'),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+  String _screenTitle(StopSessionState state) {
+    final stopType = state.session?.stopType ?? state.alarm?.stopType;
+    return stopType?.displayName ?? 'Stop';
+  }
+
+  String _quoteForState(StopSessionState state) {
+    final mode = state.alarm?.mode ?? StopMode.gentle;
+    return Copywriting.getStopSessionMessage(mode.name);
+  }
+
+  IconData _stopTypeIcon(StopType type) {
+    switch (type) {
+      case StopType.coding:
+        return Icons.front_hand_outlined;
+      case StopType.working:
+        return Icons.work_off_outlined;
+      case StopType.scrolling:
+        return Icons.phone_disabled_outlined;
+      case StopType.overthinking:
+        return Icons.self_improvement_outlined;
+      case StopType.sleep:
+        return Icons.bedtime_outlined;
+      case StopType.custom:
+        return Icons.pause_circle_outline_rounded;
+    }
   }
 
   void _showExitConfirmDialog(GoRouter router) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Thoát phiên dừng?'),
-        content: const Text('Bạn chưa hoàn thành protocol. Phiên này sẽ vẫn được lưu để xử lý sau.'),
+        backgroundColor: AppColors.cardBg,
+        title: const Text('Rời phiên dừng?'),
+        content: const Text(
+          'Nếu thoát bây giờ, bạn sẽ bỏ dở alarm moment này.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),

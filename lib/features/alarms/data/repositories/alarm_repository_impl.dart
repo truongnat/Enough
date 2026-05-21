@@ -1,5 +1,6 @@
 import '../../domain/entities/stop_alarm.dart';
 import '../../domain/repositories/alarm_repository.dart';
+import '../../../../core/utils/logger.dart';
 import '../datasources/alarm_local_datasource.dart';
 import '../models/stop_alarm_model.dart';
 
@@ -14,7 +15,7 @@ class AlarmRepositoryImpl implements AlarmRepository {
       final jsonList = await _datasource.getAlarms();
       return jsonList.map((json) => StopAlarmModel.fromJson(json)).toList();
     } catch (e) {
-      print('[AlarmRepository] Error getting alarms: $e');
+      AppLogger.error('Error getting alarms', e, null, 'AlarmRepository');
       rethrow;
     }
   }
@@ -36,7 +37,7 @@ class AlarmRepositoryImpl implements AlarmRepository {
     try {
       return alarms.firstWhere((a) => a.id == id);
     } catch (e) {
-      print('[AlarmRepository] Alarm not found: $id');
+      AppLogger.warning('Alarm not found: $id', 'AlarmRepository');
       return null;
     }
   }

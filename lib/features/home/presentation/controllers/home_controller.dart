@@ -40,7 +40,9 @@ class HomeController extends StateNotifier<HomeState> {
         return triggerA.compareTo(triggerB);
       });
       
-      debugPrint('[HomeController] Loaded data. NextAlarm: ${nextAlarm?.id ?? 'null'} (${nextAlarm?.timeOfDayHour}:${nextAlarm?.timeOfDayMinute}), Alarms count: ${allAlarms.length}, StoppedCount: ${stats['stoppedCount']}, LatestReceipt: ${latestReceipt?.id ?? 'null'}');
+      if (kDebugMode) {
+        debugPrint('[HomeController] Loaded data. NextAlarm: ${nextAlarm?.id ?? 'null'} (${nextAlarm?.timeOfDayHour}:${nextAlarm?.timeOfDayMinute}), Alarms count: ${allAlarms.length}, StoppedCount: ${stats['stoppedCount']}, LatestReceipt: ${latestReceipt?.id ?? 'null'}');
+      }
 
       state = state.copyWith(
         nextAlarm: nextAlarm,
@@ -51,7 +53,9 @@ class HomeController extends StateNotifier<HomeState> {
         error: null,
       );
     } catch (e) {
-      debugPrint('[HomeController] Error loading data: $e');
+      if (kDebugMode) {
+        debugPrint('[HomeController] Error loading data: $e');
+      }
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }

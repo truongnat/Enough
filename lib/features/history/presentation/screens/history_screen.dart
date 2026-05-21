@@ -1,166 +1,242 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
-import '../../../../core/constants/copywriting.dart';
+import '../../../../core/responsive/responsive.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/product_components.dart';
+import '../../../receipts/domain/entities/stop_receipt.dart';
 import '../../../stop_session/domain/entities/stop_session.dart';
 import '../../../stop_session/domain/entities/stop_session_status.dart';
-import '../../../receipts/domain/entities/stop_receipt.dart';
 import '../controllers/history_controller.dart';
 
-class HistoryScreen extends ConsumerStatefulWidget {
+class HistoryScreen extends ConsumerWidget {
   const HistoryScreen({super.key});
 
   @override
-  ConsumerState<HistoryScreen> createState() => _HistoryScreenState();
-}
-
-class _HistoryScreenState extends ConsumerState<HistoryScreen> {
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(historyControllerProvider);
     final notifier = ref.read(historyControllerProvider.notifier);
+    final horizontalPadding = Responsive.horizontalPadding(context);
+    final compact = Responsive.compactMode(context);
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Column(
-          children: [
-            AppPageHeader(
-              title: Copywriting.historyLabel,
-              leading: const SizedBox.shrink(), // No leading back button on main tab
-            ),
-            _buildFilterChips(state, notifier),
-            Expanded(
-              child: state.isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : state.filteredSessions.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(
-                                Icons.history,
-                                size: 64,
-                                color: AppColors.textTertiary,
-                              ),
-                              const SizedBox(height: 16.0),
-                              Text(
-                                Copywriting.emptyHistory,
-                                style: AppTextStyles.bodyMedium,
-                              ),
-                            ],
+      body: AppGradientBackground(
+        padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+        child: SafeArea(
+          bottom: true,
+          child: Column(
+            children: [
+              const AppPageHeader(
+                title: 'Lịch sử',
+                leading: SizedBox(width: 44, height: 44),
+              ),
+              Padding(
+                padding: EdgeInsets.only(top: 6, bottom: compact ? 12 : 14),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      _FilterChip(
+                        label: 'Tất cả',
+                        selected: state.selectedFilter == 'all',
+                        onTap: () => notifier.setFilter('all'),
+                      ),
+                      const SizedBox(width: 8),
+                      _FilterChip(
+                        label: 'Thành công',
+                        selected: state.selectedFilter == 'success',
+                        onTap: () => notifier.setFilter('success'),
+                      ),
+                      const SizedBox(width: 8),
+                      _FilterChip(
+                        label: 'Snooze',
+                        selected: state.selectedFilter == 'snooze',
+                        onTap: () => notifier.setFilter('snooze'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Expanded(
+                child: state.isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : state.filteredSessions.isEmpty
+                    ? Center(
+                        child: Text(
+                          'Chưa có lịch sử nào để kể.',
+                          textAlign: TextAlign.center,
+                          style: AppTextStyles.bodyLarge.copyWith(
+                            color: AppColors.textSecondary,
                           ),
-                        )
-                      : ListView.builder(
-                          padding: const EdgeInsets.all(16.0),
-                          itemCount: state.filteredSessions.length,
-                          itemBuilder: (context, index) {
-                            final session = state.filteredSessions[index];
-                            return _buildSessionCard(session, state.receipts);
-                          },
                         ),
-            ),
-          ],
+                      )
+                    : ListView(
+                        physics: const BouncingScrollPhysics(),
+                        padding: const EdgeInsets.only(bottom: 120),
+                        children: [
+                          ..._buildGroupedSections(
+                            context,
+                            state.filteredSessions,
+                            state.receipts,
+                          ),
+                        ],
+                      ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildFilterChips(HistoryState state, HistoryController notifier) {
+  List<Widget> _buildGroupedSections(
+    BuildContext context,
+    List<StopSession> sessions,
+    List<StopReceipt> receipts,
+  ) {
+    final today = <StopSession>[];
+    final yesterday = <StopSession>[];
+    final earlier = <StopSession>[];
+    final now = DateTime.now();
+    final startToday = DateTime(now.year, now.month, now.day);
+    final startYesterday = startToday.subtract(const Duration(days: 1));
+
+    for (final session in sessions) {
+      final date = DateTime(
+        session.startedAt.year,
+        session.startedAt.month,
+        session.startedAt.day,
+      );
+      if (date == startToday) {
+        today.add(session);
+      } else if (date == startYesterday) {
+        yesterday.add(session);
+      } else {
+        earlier.add(session);
+      }
+    }
+
+    final sections = <Widget>[];
+    if (today.isNotEmpty) {
+      sections
+        ..add(_sectionLabel('Hôm nay'))
+        ..add(_groupCard(context, today, receipts));
+    }
+    if (yesterday.isNotEmpty) {
+      sections
+        ..add(const SizedBox(height: 16))
+        ..add(_sectionLabel('Hôm qua'))
+        ..add(_groupCard(context, yesterday, receipts));
+    }
+    if (earlier.isNotEmpty) {
+      sections
+        ..add(const SizedBox(height: 16))
+        ..add(_sectionLabel('Gần đây'))
+        ..add(_groupCard(context, earlier, receipts));
+    }
+    return sections;
+  }
+
+  Widget _sectionLabel(String label) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-      child: Wrap(
-        spacing: 8.0,
-        children: ['all', 'success', 'snooze', 'missed'].map((filter) {
-          final isSelected = state.selectedFilter == filter;
-          return FilterChip(
-            label: Text(filter.toUpperCase()),
-            selected: isSelected,
-            onSelected: (_) => notifier.setFilter(filter),
-            selectedColor: AppColors.primary.withValues(alpha: 0.2),
-            checkmarkColor: AppColors.primary,
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Text(
+        label,
+        style: AppTextStyles.labelLarge.copyWith(
+          color: AppColors.textSecondary,
+        ),
+      ),
+    );
+  }
+
+  Widget _groupCard(
+    BuildContext context,
+    List<StopSession> sessions,
+    List<StopReceipt> receipts,
+  ) {
+    return AppGlassCard(
+      child: Column(
+        children: sessions.map((session) {
+          final receipt = _findReceiptForSession(session, receipts);
+          final statusColor = _getStatusColor(session.status);
+          final time =
+              '${session.startedAt.hour.toString().padLeft(2, '0')}:${session.startedAt.minute.toString().padLeft(2, '0')}';
+          final statusText = _getStatusText(session.status);
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: GestureDetector(
+              onTap: receipt == null
+                  ? null
+                  : () => context.push('/receipt/${receipt.id}'),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.cardBgElevated,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(
+                      width: 48,
+                      child: Text(
+                        time,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        session.stopType.displayName.toUpperCase(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.labelLarge.copyWith(
+                          color: session.status == StopSessionStatus.completed
+                              ? AppColors.primary
+                              : AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    if (session.status == StopSessionStatus.completed)
+                      Icon(Icons.check_rounded, color: statusColor)
+                    else
+                      Text(
+                        statusText,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.labelMedium.copyWith(
+                          color: statusColor,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
           );
         }).toList(),
       ),
     );
   }
 
-  StopReceipt? _findReceiptForSession(StopSession session, List<StopReceipt> receipts) {
+  StopReceipt? _findReceiptForSession(
+    StopSession session,
+    List<StopReceipt> receipts,
+  ) {
     for (final receipt in receipts) {
       if (receipt.sessionId == session.id) return receipt;
     }
     return null;
-  }
-
-  Widget _buildSessionCard(StopSession session, List<StopReceipt> receipts) {
-    final matchingReceipt = _findReceiptForSession(session, receipts);
-    final hasReceipt = matchingReceipt != null;
-    final statusColor = _getStatusColor(session.status);
-    final statusText = _getStatusText(session.status);
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12.0),
-      child: AppSurfaceCard(
-        onTap: hasReceipt
-            ? () => context.push('/receipt/${matchingReceipt.id}')
-            : null,
-        child: Row(
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: statusColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12.0),
-              ),
-              child: Icon(
-                _getStatusIcon(session.status),
-                color: statusColor,
-                size: 24,
-              ),
-            ),
-            const SizedBox(width: 12.0),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    session.stopType.displayName,
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 4.0),
-                  Text(
-                    DateFormat('dd/MM/yyyy - HH:mm').format(session.startedAt),
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: 4.0),
-                  Text(
-                    statusText,
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: statusColor,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (hasReceipt)
-              const Icon(
-                Icons.chevron_right,
-                color: AppColors.textSecondary,
-              ),
-          ],
-        ),
-      ),
-    );
   }
 
   Color _getStatusColor(StopSessionStatus status) {
@@ -179,26 +255,30 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
   String _getStatusText(StopSessionStatus status) {
     switch (status) {
       case StopSessionStatus.completed:
-        return 'Completed';
+        return 'Thành công';
       case StopSessionStatus.snoozed:
-        return 'Snoozed';
+        return 'Snooze';
       case StopSessionStatus.missed:
         return 'Missed';
       case StopSessionStatus.active:
         return 'Active';
     }
   }
+}
 
-  IconData _getStatusIcon(StopSessionStatus status) {
-    switch (status) {
-      case StopSessionStatus.completed:
-        return Icons.check_circle;
-      case StopSessionStatus.snoozed:
-        return Icons.snooze;
-      case StopSessionStatus.missed:
-        return Icons.cancel;
-      case StopSessionStatus.active:
-        return Icons.play_circle;
-    }
+class _FilterChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _FilterChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AppSegmentedChip(label: label, isSelected: selected, onTap: onTap);
   }
 }

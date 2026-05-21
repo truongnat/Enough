@@ -1,160 +1,504 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/constants/app_constants.dart';
-import '../../../../core/constants/copywriting.dart';
+import '../../../../core/responsive/responsive.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/product_components.dart';
+import '../../../alarms/domain/entities/repeat_day.dart';
+import '../../../alarms/domain/entities/stop_alarm.dart';
+import '../../../alarms/domain/entities/stop_type.dart';
 import '../controllers/home_controller.dart';
 
-class HomeScreen extends ConsumerStatefulWidget {
+class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
-  ConsumerState<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends ConsumerState<HomeScreen> {
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final homeState = ref.watch(homeControllerProvider);
+    final alarms = homeState.alarms;
+    final hasAlarms = alarms.isNotEmpty;
+    final horizontalPadding = Responsive.horizontalPadding(context);
+    final sectionSpacing = Responsive.sectionSpacing(context);
+    final compact = Responsive.compactMode(context);
+    final bottomPadding = 120.0 + MediaQuery.paddingOf(context).bottom;
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => context.push('/alarm/create'),
-        backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.background,
-        child: const Icon(Icons.add, size: 28),
-      ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppConstants.paddingL, vertical: AppConstants.paddingM),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildGreeting(),
-              const SizedBox(height: AppConstants.paddingL),
-              if (homeState.isLoading)
-                const Expanded(child: Center(child: CircularProgressIndicator()))
-              else
-                Expanded(
-                  child: ListView(
-                    physics: const BouncingScrollPhysics(),
-                    children: [
-                      _buildNextAlarmCard(homeState),
-                      const SizedBox(height: AppConstants.paddingL),
-                      _buildAllAlarmsSection(homeState),
-                      const SizedBox(height: AppConstants.paddingL),
-                      _buildTodayCard(homeState),
-                      const SizedBox(height: AppConstants.paddingL),
-                      _buildLatestReceiptCard(homeState),
-                    ],
-                  ),
+      body: AppGradientBackground(
+        padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+        child: SafeArea(
+          bottom: false,
+          child: homeState.isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : CustomScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  slivers: [
+                    SliverPadding(
+                      padding: EdgeInsets.only(
+                        top: compact ? 10 : 12,
+                        bottom: bottomPadding,
+                      ),
+                      sliver: SliverList(
+                        delegate: SliverChildListDelegate([
+                          _buildTopBar(context),
+                          SizedBox(height: compact ? 14 : 18),
+                          _buildHeadline(context),
+                          SizedBox(height: sectionSpacing),
+                          if (homeState.nextAlarm != null)
+                            _buildNextAlarmHero(context, homeState)
+                          else
+                            _buildEmptyHero(context),
+                          SizedBox(height: compact ? 16 : 18),
+                          _buildTodayCard(context, homeState),
+                          SizedBox(height: compact ? 16 : 18),
+                          _buildLatestReceiptCard(context, homeState),
+                          SizedBox(height: compact ? 18 : 20),
+                          if (hasAlarms)
+                            _buildAllAlarmsSection(context, alarms),
+                          if (!hasAlarms) ...[
+                            const SizedBox(height: 12),
+                            _buildFirstAlarmCard(context),
+                          ],
+                        ]),
+                      ),
+                    ),
+                  ],
                 ),
-            ],
-          ),
         ),
       ),
     );
   }
 
-  Widget _buildAllAlarmsSection(HomeState state) {
-    final alarms = state.alarms;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildTopBar(BuildContext context) {
+    final greeting = _greetingForHour(DateTime.now().hour);
+    return Row(
       children: [
-        const AppSectionTitle(title: 'TẤT CẢ BÁO THỨC'),
-        const SizedBox(height: 8.0),
-        if (alarms.isEmpty)
-          AppSurfaceCard(
-            child: EmptyState(
-              message: 'Chưa có báo thức nào được tạo.',
-              actionLabel: 'Tạo báo thức đầu tiên',
-              onAction: () => context.push('/alarm/create'),
-              icon: Icons.alarm_add_outlined,
+        Expanded(
+          child: Text(
+            '$greeting, Trường 👋',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTextStyles.bodyLarge.copyWith(
+              color: AppColors.textSecondary,
             ),
-          )
-        else
-          ...alarms.map((alarm) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 8.0),
-              child: AppSurfaceCard(
-                onTap: () => context.push('/alarm/edit/${alarm.id}'),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            textBaseline: TextBaseline.alphabetic,
-                            crossAxisAlignment: CrossAxisAlignment.baseline,
-                            children: [
-                              Text(
-                                alarm.formattedTime,
-                                style: AppTextStyles.h2.copyWith(fontWeight: FontWeight.bold),
-                              ),
-                              const SizedBox(width: 8.0),
-                              Text(
-                                _getRepeatSummary(alarm.repeatDays),
-                                style: AppTextStyles.bodySmall.copyWith(
-                                  color: AppColors.textSecondary,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 4.0),
-                          Text(
-                            alarm.stopType.displayName,
-                            style: AppTextStyles.bodyMedium.copyWith(
-                              color: AppColors.textPrimary,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 12.0),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-                      decoration: BoxDecoration(
-                        color: alarm.isEnabled
-                            ? AppColors.primary.withValues(alpha: 0.1)
-                            : AppColors.cardBgElevated,
-                        borderRadius: BorderRadius.circular(8.0),
-                        border: Border.all(
-                          color: alarm.isEnabled ? AppColors.primary : AppColors.border,
-                        ),
-                      ),
-                      child: Text(
-                        alarm.isEnabled ? 'BẬT' : 'TẮT',
-                        style: AppTextStyles.labelSmall.copyWith(
-                          color: alarm.isEnabled ? AppColors.primary : AppColors.textTertiary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }),
+          ),
+        ),
+        AppRoundIconButton(
+          icon: Icons.settings_outlined,
+          onTap: () => context.go('/settings'),
+          backgroundColor: AppColors.cardBgGlass,
+        ),
       ],
     );
   }
 
-  String _getRepeatSummary(List<dynamic> repeatDays) {
+  Widget _buildHeadline(BuildContext context) {
+    final compact = Responsive.compactMode(context);
+    return Text(
+      'Hôm nay mày muốn dừng điều gì?',
+      maxLines: compact ? 3 : 2,
+      overflow: TextOverflow.ellipsis,
+      style: AppTextStyles.h1.copyWith(
+        fontSize: compact ? 32 : AppTextStyles.h1.fontSize,
+      ),
+    );
+  }
+
+  Widget _buildNextAlarmHero(BuildContext context, HomeState state) {
+    final alarm = state.nextAlarm!;
+    final nextTrigger = alarm.getNextTrigger(DateTime.now());
+    final timeLabel = _formatCountdown(nextTrigger.difference(DateTime.now()));
+    final compact = Responsive.compactMode(context);
+
+    return AppHeroCard(
+      label: 'Tiếp theo',
+      title: alarm.stopType.subtitle,
+      emphasis: alarm.stopType.displayName.toUpperCase(),
+      value: alarm.formattedTime,
+      supporting: 'Còn $timeLabel',
+      icon: _stopTypeIcon(alarm.stopType),
+      onTap: () => context.push('/alarm/edit/${alarm.id}'),
+      trailing: compact
+          ? null
+          : AppIllustrationPlaceholder(
+              icon: _stopTypeIcon(alarm.stopType),
+              label: 'TODO(ui-assets)\nhero illustration',
+            ),
+    );
+  }
+
+  Widget _buildEmptyHero(BuildContext context) {
+    final compact = Responsive.compactMode(context);
+    return AppGlassCard(
+      borderRadius: BorderRadius.circular(30),
+      padding: EdgeInsets.all(compact ? 18 : 22),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Tiếp theo',
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
+          SizedBox(height: compact ? 12 : 16),
+          AppIllustrationPlaceholder(
+            icon: Icons.alarm_add_rounded,
+            label: 'TODO(ui-assets)\nnew user illustration',
+            width: double.infinity,
+            height: compact ? 132 : 170,
+          ),
+          SizedBox(height: compact ? 14 : 18),
+          Text(
+            'Chưa có Stop Alarm nào',
+            style: AppTextStyles.h3,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Tạo Stop Alarm đầu tiên để Home bắt đầu có nhịp sống của riêng nó.',
+            maxLines: compact ? 3 : 2,
+            overflow: TextOverflow.ellipsis,
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
+          SizedBox(height: compact ? 14 : 18),
+          AppPrimaryButton(
+            label: 'Tạo Stop Alarm đầu tiên',
+            icon: Icons.add_rounded,
+            onTap: () => context.push('/alarm/create'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTodayCard(BuildContext context, HomeState state) {
+    final protectedMinutes = state.stoppedCount * 130;
+    final protectedHours = protectedMinutes ~/ 60;
+    final remainingMinutes = protectedMinutes % 60;
+    final compact = Responsive.compactMode(context);
+
+    return AppGlassCard(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Đã dừng hôm nay',
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  '${state.stoppedCount} lần',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.h2.copyWith(fontSize: compact ? 34 : 42),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  'Bạn đã bảo vệ được ${protectedHours}h ${remainingMinutes.toString().padLeft(2, '0')}m năng lượng quý giá ✨',
+                  maxLines: compact ? 3 : 4,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(width: compact ? 12 : 16),
+          Container(
+            width: compact ? 68 : 82,
+            height: compact ? 68 : 82,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppColors.primarySoft,
+              border: Border.all(
+                color: AppColors.primary.withValues(alpha: 0.45),
+              ),
+            ),
+            child: const Icon(
+              Icons.workspace_premium_rounded,
+              color: AppColors.warning,
+              size: 34,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLatestReceiptCard(BuildContext context, HomeState state) {
+    final receipt = state.latestReceipt;
+    final compact = Responsive.compactMode(context);
+    if (receipt == null) {
+      return AppGlassCard(
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: AppColors.cardBgElevated,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Icon(
+                Icons.receipt_long_rounded,
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Stop Receipt mới nhất',
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Chưa có biên lai nào được tạo.',
+                    maxLines: compact ? 2 : 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.labelLarge,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return AppGlassCard(
+      onTap: () => context.push('/receipt/${receipt.id}'),
+      child: Row(
+        children: [
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              color: AppColors.primarySoft,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Icon(
+              _stopTypeIcon(receipt.stopType),
+              color: AppColors.primary,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Stop Receipt mới nhất',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  receipt.stopType.displayName.toUpperCase(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.labelLarge.copyWith(
+                    color: AppColors.primary,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _formatTime(receipt.completedAt),
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                _formatTime(receipt.startedAt),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.textTertiary,
+                ),
+              ),
+              const SizedBox(height: 6),
+              const AppPill(
+                label: 'Thành công',
+                color: AppColors.success,
+                filled: true,
+                icon: Icons.check_rounded,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAllAlarmsSection(BuildContext context, List<StopAlarm> alarms) {
+    final visibleAlarms = alarms.take(3).toList();
+    final compact = Responsive.compactMode(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        AppSectionLabel(
+          title: 'ALL STOP ALARMS',
+          trailing: alarms.length > 3
+              ? 'Xem thêm (${alarms.length - 3})'
+              : null,
+        ),
+        const SizedBox(height: 12),
+        ...visibleAlarms.map(
+          (alarm) => Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: AppGlassCard(
+              onTap: () => context.push('/alarm/edit/${alarm.id}'),
+              padding: EdgeInsets.symmetric(
+                horizontal: compact ? 14 : 16,
+                vertical: compact ? 12 : 14,
+              ),
+              borderRadius: BorderRadius.circular(24),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    width: compact ? 42 : 48,
+                    height: compact ? 42 : 48,
+                    decoration: BoxDecoration(
+                      color: alarm.isEnabled
+                          ? AppColors.primarySoft
+                          : AppColors.cardBgElevated,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Icon(
+                      _stopTypeIcon(alarm.stopType),
+                      color: alarm.isEnabled
+                          ? AppColors.primary
+                          : AppColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Flexible(
+                              child: Text(
+                                alarm.formattedTime,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppTextStyles.h4.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: compact
+                                      ? 18
+                                      : AppTextStyles.h4.fontSize,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                _getRepeatSummary(alarm.repeatDays),
+                                style: AppTextStyles.bodySmall.copyWith(
+                                  color: AppColors.textSecondary,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.right,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          alarm.stopType.displayName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyles.bodyMedium.copyWith(
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  AppPill(
+                    label: alarm.isEnabled ? 'BẬT' : 'TẮT',
+                    color: alarm.isEnabled
+                        ? AppColors.primary
+                        : AppColors.textTertiary,
+                    filled: alarm.isEnabled,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFirstAlarmCard(BuildContext context) {
+    final compact = Responsive.compactMode(context);
+    return AppGlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const AppSectionTitle(title: 'ALL STOP ALARMS'),
+          const SizedBox(height: 14),
+          Text(
+            'Danh sách báo thức sẽ hiện ở đây sau khi bạn tạo alarm đầu tiên.',
+            maxLines: compact ? 3 : 2,
+            overflow: TextOverflow.ellipsis,
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 14),
+          AppSecondaryButton(
+            label: 'Tạo Stop Alarm đầu tiên',
+            onTap: () => context.push('/alarm/create'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatCountdown(Duration duration) {
+    if (duration.inHours > 0) {
+      return '${duration.inHours} giờ ${duration.inMinutes % 60} phút';
+    }
+    return '${duration.inMinutes} phút';
+  }
+
+  String _getRepeatSummary(List<RepeatDay> repeatDays) {
     if (repeatDays.isEmpty) return 'Một lần';
     if (repeatDays.length == 7) return 'Hàng ngày';
-    
-    // Check if it's weekdays (Monday to Friday)
-    final isoValues = repeatDays.map((d) => d.isoValue as int).toList()..sort();
+
+    final isoValues = repeatDays.map((d) => d.isoValue).toList()..sort();
     if (isoValues.length == 5 &&
         isoValues[0] == 1 &&
         isoValues[1] == 2 &&
@@ -164,172 +508,37 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       return 'Ngày thường';
     }
 
-    // Check if it's weekend (Saturday and Sunday)
     if (isoValues.length == 2 && isoValues[0] == 6 && isoValues[1] == 7) {
       return 'Cuối tuần';
     }
 
-    // Otherwise show short names comma separated
-    final List<String> shorts = repeatDays.map((d) => d.shortName as String).toList();
-    return shorts.join(', ');
+    return repeatDays.map((d) => d.shortName).join(', ');
   }
 
-  Widget _buildGreeting() {
-    final hour = DateTime.now().hour;
-    final greeting = Copywriting.getGreeting(hour);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          greeting,
-          style: AppTextStyles.h2,
-        ),
-        const SizedBox(height: AppConstants.paddingXS),
-        Text(
-          Copywriting.sloganLabel,
-          style: AppTextStyles.bodySecondary(AppColors.textSecondary),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildNextAlarmCard(HomeState state) {
-    final alarm = state.nextAlarm;
-    
-    if (alarm == null) {
-      return AppSurfaceCard(
-        child: EmptyState(
-          message: Copywriting.noAlarmLabel,
-          actionLabel: Copywriting.createFirstAlarm,
-          onAction: () => context.push('/alarm/create'),
-          icon: Icons.alarm_off,
-        ),
-      );
-    }
-
-    final now = DateTime.now();
-    final nextTrigger = alarm.getNextTrigger(now);
-    final timeUntil = nextTrigger.difference(now);
-    
-    String timeLabel;
-    if (timeUntil.inHours > 0) {
-      timeLabel = '${timeUntil.inHours}h ${timeUntil.inMinutes % 60}m';
-    } else {
-      timeLabel = '${timeUntil.inMinutes}m';
-    }
-
-    return AppSurfaceCard(
-      onTap: () => context.push('/alarm/edit/${alarm.id}'),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            Copywriting.nextAlarmLabel,
-            style: AppTextStyles.labelSecondary(AppColors.textSecondary),
-          ),
-          const SizedBox(height: AppConstants.paddingS),
-          Text(
-            alarm.formattedTime,
-            style: AppTextStyles.alarmTime,
-          ),
-          const SizedBox(height: AppConstants.paddingS),
-          Text(
-            alarm.stopType.displayName,
-            style: AppTextStyles.h4,
-          ),
-          const SizedBox(height: AppConstants.paddingXS),
-          Row(
-            children: [
-              const Icon(
-                Icons.access_time,
-                size: 16,
-                color: AppColors.textSecondary,
-              ),
-              const SizedBox(width: AppConstants.paddingXS),
-              Text(
-                'Còn $timeLabel',
-                style: AppTextStyles.bodySecondary(AppColors.textSecondary),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTodayCard(HomeState state) {
-    return AppSurfaceCard(
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                Copywriting.todayLabel,
-                style: AppTextStyles.labelSecondary(AppColors.textSecondary),
-              ),
-              const SizedBox(height: AppConstants.paddingXS),
-              Text(
-                '${state.stoppedCount} ${Copywriting.timesLabel}',
-                style: AppTextStyles.h3,
-              ),
-            ],
-          ),
-          Container(
-            padding: const EdgeInsets.all(AppConstants.paddingM),
-            decoration: BoxDecoration(
-              color: AppColors.success.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(16.0),
-            ),
-            child: const Icon(
-              Icons.check_circle,
-              color: AppColors.success,
-              size: 32,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLatestReceiptCard(HomeState state) {
-    final receipt = state.latestReceipt;
-    
-    if (receipt == null) {
-      return AppSurfaceCard(
-        child: EmptyState(
-          message: Copywriting.noReceiptLabel,
-          icon: Icons.receipt_long,
-        ),
-      );
-    }
-
-    return AppSurfaceCard(
-      onTap: () => context.push('/receipt/${receipt.id}'),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            Copywriting.latestReceiptLabel,
-            style: AppTextStyles.labelSecondary(AppColors.textSecondary),
-          ),
-          const SizedBox(height: AppConstants.paddingS),
-          Text(
-            receipt.stopType.displayName,
-            style: AppTextStyles.h4,
-          ),
-          const SizedBox(height: AppConstants.paddingXS),
-          Text(
-            _formatTime(receipt.completedAt),
-            style: AppTextStyles.bodySecondary(AppColors.textSecondary),
-          ),
-        ],
-      ),
-    );
+  String _greetingForHour(int hour) {
+    if (hour < 12) return 'Chào buổi sáng';
+    if (hour < 18) return 'Chào buổi chiều';
+    return 'Chào buổi tối';
   }
 
   String _formatTime(DateTime dateTime) {
     return '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+  }
+
+  IconData _stopTypeIcon(StopType type) {
+    switch (type) {
+      case StopType.coding:
+        return Icons.laptop_mac_rounded;
+      case StopType.working:
+        return Icons.work_outline_rounded;
+      case StopType.scrolling:
+        return Icons.phone_android_rounded;
+      case StopType.overthinking:
+        return Icons.psychology_alt_outlined;
+      case StopType.sleep:
+        return Icons.dark_mode_outlined;
+      case StopType.custom:
+        return Icons.auto_awesome_outlined;
+    }
   }
 }

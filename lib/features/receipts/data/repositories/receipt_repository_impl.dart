@@ -1,5 +1,6 @@
 import '../../domain/entities/stop_receipt.dart';
 import '../../domain/repositories/receipt_repository.dart';
+import '../../../../core/utils/logger.dart';
 import '../datasources/receipt_local_datasource.dart';
 import '../models/stop_receipt_model.dart';
 
@@ -14,7 +15,7 @@ class ReceiptRepositoryImpl implements ReceiptRepository {
       final list = await _datasource.getReceipts();
       return list.map((json) => StopReceiptModel.fromJson(json)).toList();
     } catch (e) {
-      print('[ReceiptRepository] Error getting receipts: $e');
+      AppLogger.error('Error getting receipts', e, null, 'ReceiptRepository');
       rethrow;
     }
   }

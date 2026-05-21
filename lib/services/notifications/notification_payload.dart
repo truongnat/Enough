@@ -6,6 +6,8 @@ class NotificationPayload {
   final String? sessionId;
   final String? category;
   final String? title;
+  final String? scheduledAt;
+  final String? stopType;
 
   NotificationPayload({
     required this.action,
@@ -13,10 +15,14 @@ class NotificationPayload {
     this.sessionId,
     this.category,
     this.title,
+    this.scheduledAt,
+    this.stopType,
   });
 
   static const String actionOpenStopSession = 'openStopSession';
   static const String actionOpenSnoozedSession = 'openSnoozedSession';
+  static const String actionStopAlarm = 'stopAlarm';
+  static const String actionSnoozeAlarm = 'snoozeAlarm';
 
   Map<String, dynamic> toMap() {
     return {
@@ -25,6 +31,8 @@ class NotificationPayload {
       'sessionId': sessionId,
       'category': category,
       'title': title,
+      'scheduledAt': scheduledAt,
+      'stopType': stopType,
     };
   }
 
@@ -35,6 +43,28 @@ class NotificationPayload {
       sessionId: map['sessionId'],
       category: map['category'],
       title: map['title'],
+      scheduledAt: map['scheduledAt'],
+      stopType: map['stopType'],
+    );
+  }
+
+  NotificationPayload copyWith({
+    String? action,
+    String? alarmId,
+    String? sessionId,
+    String? category,
+    String? title,
+    String? scheduledAt,
+    String? stopType,
+  }) {
+    return NotificationPayload(
+      action: action ?? this.action,
+      alarmId: alarmId ?? this.alarmId,
+      sessionId: sessionId ?? this.sessionId,
+      category: category ?? this.category,
+      title: title ?? this.title,
+      scheduledAt: scheduledAt ?? this.scheduledAt,
+      stopType: stopType ?? this.stopType,
     );
   }
 
