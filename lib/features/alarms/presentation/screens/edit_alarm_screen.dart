@@ -5,6 +5,7 @@ import '../controllers/alarm_controller.dart';
 import 'alarm_form.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/product_components.dart';
+import '../../../home/presentation/controllers/home_controller.dart';
 
 class EditAlarmScreen extends ConsumerStatefulWidget {
   final String alarmId;
@@ -76,6 +77,7 @@ class _EditAlarmScreenState extends ConsumerState<EditAlarmScreen> {
                     if (confirm == true && context.mounted) {
                       await notifier.deleteAlarm(widget.alarmId);
                       if (context.mounted) {
+                        ref.read(homeControllerProvider.notifier).refresh();
                         context.pop();
                       }
                     }
@@ -107,6 +109,7 @@ class _EditAlarmScreenState extends ConsumerState<EditAlarmScreen> {
                       onTap: () async {
                         final success = await notifier.saveAlarm();
                         if (success && context.mounted) {
+                          ref.read(homeControllerProvider.notifier).refresh();
                           context.pop();
                         }
                       },

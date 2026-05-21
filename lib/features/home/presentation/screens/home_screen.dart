@@ -5,8 +5,8 @@ import '../../../../core/constants/app_constants.dart';
 import '../../../../core/constants/copywriting.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/empty_state.dart';
+import '../../../../core/widgets/product_components.dart';
 import '../controllers/home_controller.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -81,7 +81,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final alarm = state.nextAlarm;
     
     if (alarm == null) {
-      return AppCard(
+      return AppSurfaceCard(
         child: EmptyState(
           message: Copywriting.noAlarmLabel,
           actionLabel: Copywriting.createFirstAlarm,
@@ -102,7 +102,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       timeLabel = '${timeUntil.inMinutes}m';
     }
 
-    return AppCard(
+    return AppSurfaceCard(
       onTap: () => context.push('/alarm/edit/${alarm.id}'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -142,7 +142,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _buildTodayCard(HomeState state) {
-    return AppCard(
+    return AppSurfaceCard(
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -181,7 +181,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final receipt = state.latestReceipt;
     
     if (receipt == null) {
-      return AppCard(
+      return AppSurfaceCard(
         child: EmptyState(
           message: Copywriting.noReceiptLabel,
           icon: Icons.receipt_long,
@@ -189,7 +189,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       );
     }
 
-    return AppCard(
+    return AppSurfaceCard(
       onTap: () => context.push('/receipt/${receipt.id}'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

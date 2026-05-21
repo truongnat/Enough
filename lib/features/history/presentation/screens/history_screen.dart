@@ -8,6 +8,7 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/product_components.dart';
 import '../../../stop_session/domain/entities/stop_session.dart';
 import '../../../stop_session/domain/entities/stop_session_status.dart';
+import '../../../receipts/domain/entities/stop_receipt.dart';
 import '../controllers/history_controller.dart';
 
 class HistoryScreen extends ConsumerStatefulWidget {
@@ -88,11 +89,15 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
     );
   }
 
-  Widget _buildSessionCard(StopSession session, List receipts) {
-    final dynamic matchingReceipt = receipts.firstWhere(
-      (dynamic r) => r.sessionId == session.id,
-      orElse: () => null,
-    );
+  StopReceipt? _findReceiptForSession(StopSession session, List<StopReceipt> receipts) {
+    for (final receipt in receipts) {
+      if (receipt.sessionId == session.id) return receipt;
+    }
+    return null;
+  }
+
+  Widget _buildSessionCard(StopSession session, List<StopReceipt> receipts) {
+    final matchingReceipt = _findReceiptForSession(session, receipts);
     final hasReceipt = matchingReceipt != null;
     final statusColor = _getStatusColor(session.status);
     final statusText = _getStatusText(session.status);

@@ -235,49 +235,52 @@ class _StopSessionScreenState extends ConsumerState<StopSessionScreen> {
 
   Widget _buildCompletionScreen(StopSessionState state, GoRouter router) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Đã dừng'),
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: () => router.go('/'),
-        ),
-      ),
+      backgroundColor: AppColors.background,
       body: SafeArea(
-        child: Container(
-          color: AppColors.background,
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(
-                Icons.check_circle,
-                size: 100,
-                color: AppColors.success,
+        child: Column(
+          children: [
+            AppPageHeader(
+              title: 'Đã dừng',
+              leading: AppIconButton(
+                icon: Icons.close,
+                onTap: () => router.go('/'),
               ),
-              const SizedBox(height: 24.0),
-              Text(
-                'ĐÃ DỪNG THÀNH CÔNG!',
-                style: AppTextStyles.h2,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16.0),
-              Text(
-                Copywriting.getStopSessionMessage(StopMode.gentle.name),
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: AppColors.textSecondary,
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.check_circle,
+                      size: 100,
+                      color: AppColors.success,
+                    ),
+                    const SizedBox(height: 24.0),
+                    Text(
+                      'ĐÃ DỪNG THÀNH CÔNG!',
+                      style: AppTextStyles.h2,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16.0),
+                    Text(
+                      Copywriting.getStopSessionMessage(StopMode.gentle.name),
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 48.0),
+                    AppPrimaryButton(
+                      label: Copywriting.back,
+                      onTap: () => router.go('/'),
+                    ),
+                  ],
                 ),
-                textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 48.0),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => router.go('/'),
-                  child: Text(Copywriting.back),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -285,49 +288,52 @@ class _StopSessionScreenState extends ConsumerState<StopSessionScreen> {
 
   Widget _buildSnoozeScreen(StopSessionState state, GoRouter router) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Đã hoãn'),
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: () => router.go('/'),
-        ),
-      ),
+      backgroundColor: AppColors.background,
       body: SafeArea(
-        child: Container(
-          color: AppColors.background,
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(
-                Icons.access_time,
-                size: 100,
-                color: AppColors.warning,
+        child: Column(
+          children: [
+            AppPageHeader(
+              title: 'Đã hoãn',
+              leading: AppIconButton(
+                icon: Icons.close,
+                onTap: () => router.go('/'),
               ),
-              const SizedBox(height: 24.0),
-              Text(
-                'ĐÃ HOÃN',
-                style: AppTextStyles.h2,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16.0),
-              Text(
-                Copywriting.snoozeWarning,
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: AppColors.textSecondary,
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.access_time,
+                      size: 100,
+                      color: AppColors.warning,
+                    ),
+                    const SizedBox(height: 24.0),
+                    Text(
+                      'ĐÃ HOÃN',
+                      style: AppTextStyles.h2,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16.0),
+                    Text(
+                      Copywriting.snoozeWarning,
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 48.0),
+                    AppPrimaryButton(
+                      label: Copywriting.back,
+                      onTap: () => router.go('/'),
+                    ),
+                  ],
                 ),
-                textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 48.0),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => router.go('/'),
-                  child: Text(Copywriting.back),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

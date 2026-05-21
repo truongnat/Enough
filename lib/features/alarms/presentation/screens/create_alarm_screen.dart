@@ -5,6 +5,7 @@ import '../controllers/alarm_controller.dart';
 import 'alarm_form.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/product_components.dart';
+import '../../../home/presentation/controllers/home_controller.dart';
 
 class CreateAlarmScreen extends ConsumerStatefulWidget {
   const CreateAlarmScreen({super.key});
@@ -67,6 +68,7 @@ class _CreateAlarmScreenState extends ConsumerState<CreateAlarmScreen> {
                       onTap: () async {
                         final success = await notifier.saveAlarm();
                         if (success && context.mounted) {
+                          ref.read(homeControllerProvider.notifier).refresh();
                           context.pop();
                         }
                       },
