@@ -56,7 +56,7 @@ class AlarmState {
       hour: 23,
       minute: 30,
       repeatDays: [],
-      mode: StopMode.meme,
+      mode: StopMode.general,
       protocolId: StopProtocol.getDefaultTemplate(StopType.coding).id,
       isEnabled: true,
       message: null,
@@ -168,7 +168,9 @@ class AlarmController extends StateNotifier<AlarmState> {
       final now = DateTime.now();
       final alarm = StopAlarm(
         id: state.alarmId ?? Uuid().v4(),
-        title: state.title,
+        title: state.title.trim().isEmpty
+            ? state.stopType.displayName
+            : state.title.trim(),
         stopType: state.stopType,
         customTypeLabel: state.customTypeLabel,
         timeOfDayHour: state.hour,

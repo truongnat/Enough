@@ -47,20 +47,17 @@ class HomeScreen extends ConsumerWidget {
                           SizedBox(height: compact ? 14 : 18),
                           _buildHeadline(context),
                           SizedBox(height: sectionSpacing),
-                          if (homeState.nextAlarm != null)
-                            _buildNextAlarmHero(context, homeState)
-                          else
-                            _buildEmptyHero(context),
-                          SizedBox(height: compact ? 16 : 18),
-                          _buildTodayCard(context, homeState),
-                          SizedBox(height: compact ? 16 : 18),
-                          _buildLatestReceiptCard(context, homeState),
-                          SizedBox(height: compact ? 18 : 20),
-                          if (hasAlarms)
+                          if (hasAlarms) ...[
+                            if (homeState.nextAlarm != null)
+                              _buildNextAlarmHero(context, homeState),
+                            SizedBox(height: compact ? 16 : 18),
+                            _buildTodayCard(context, homeState),
+                            SizedBox(height: compact ? 16 : 18),
+                            _buildLatestReceiptCard(context, homeState),
+                            SizedBox(height: compact ? 18 : 20),
                             _buildAllAlarmsSection(context, alarms),
-                          if (!hasAlarms) ...[
-                            const SizedBox(height: 12),
-                            _buildFirstAlarmCard(context),
+                          ] else ...[
+                            _buildEmptyOnboardingCard(context),
                           ],
                         ]),
                       ),
@@ -77,6 +74,7 @@ class HomeScreen extends ConsumerWidget {
     final settingsState = ref.watch(settingsControllerProvider);
     final userName = settingsState.settings?.userName;
     final displayName = userName?.isNotEmpty == true ? userName : null;
+    final themeMode = settingsState.settings?.themeMode ?? ThemeMode.system;
 
     return Row(
       children: [
@@ -95,8 +93,11 @@ class HomeScreen extends ConsumerWidget {
           ),
         ),
         AppRoundIconButton(
-          icon: Icons.settings_outlined,
-          onTap: () => context.go('/settings'),
+          icon: _getThemeIcon(themeMode),
+          onTap: () {
+            final newMode = _getNextThemeMode(themeMode);
+            ref.read(settingsControllerProvider.notifier).setThemeMode(newMode);
+          },
           backgroundColor: AppColors.of(
             context,
             AppColors.cardBgGlass,
@@ -165,95 +166,53 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildEmptyHero(BuildContext context) {
+  Widget _buildEmptyOnboardingCard(BuildContext context) {
     final compact = Responsive.compactMode(context);
     return AppGlassCard(
       borderRadius: BorderRadius.circular(30),
-      padding: EdgeInsets.all(compact ? 18 : 22),
+      padding: EdgeInsets.all(compact ? 24 : 32),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text(
-            'Tiếp theo',
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: AppColors.of(
-                context,
-                AppColors.textSecondary,
-                AppColors.lightTextSecondary,
-              ),
-            ),
-          ),
-          SizedBox(height: compact ? 12 : 16),
           Container(
-            width: double.infinity,
-            height: compact ? 132 : 170,
+            width: compact ? 100 : 120,
+            height: compact ? 100 : 120,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(24),
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  AppColors.of(
-                    context,
-                    AppColors.cardBgElevated,
-                    AppColors.lightCardBgElevated,
-                  ),
-                  AppColors.of(
-                    context,
-                    AppColors.backgroundSecondary,
-                    AppColors.lightBackgroundSecondary,
-                  ),
+                  AppColors.primary.withValues(alpha: 0.2),
+                  AppColors.primary.withValues(alpha: 0.05),
                 ],
               ),
               border: Border.all(
-                color: AppColors.of(
-                  context,
-                  AppColors.border,
-                  AppColors.lightBorder,
-                ),
+                color: AppColors.primary.withValues(alpha: 0.3),
+                width: 1.5,
               ),
             ),
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.add_circle_outline_rounded,
-                    size: 48,
-                    color: AppColors.primary.withValues(alpha: 0.7),
-                  ),
-                  const SizedBox(height: 8),
-                  Icon(
-                    Icons.alarm_rounded,
-                    size: 32,
-                    color: AppColors.of(
-                      context,
-                      AppColors.textSecondary,
-                      AppColors.lightTextSecondary,
-                    ),
-                  ),
-                ],
-              ),
+            child: Icon(
+              Icons.alarm_add_rounded,
+              size: compact ? 48 : 56,
+              color: AppColors.primary,
             ),
           ),
-          SizedBox(height: compact ? 14 : 18),
+          SizedBox(height: compact ? 20 : 24),
           Text(
-            'Chưa có Stop Alarm nào',
-            style: AppTextStyles.h3.copyWith(
+            'Bắt đầu hành trình dừng thói quen',
+            style: AppTextStyles.h4.copyWith(
               color: AppColors.of(
                 context,
                 AppColors.textPrimary,
                 AppColors.lightTextPrimary,
               ),
             ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: compact ? 8 : 12),
           Text(
-            'Tạo Stop Alarm đầu tiên để Home bắt đầu có nhịp sống của riêng nó.',
-            maxLines: compact ? 3 : 2,
-            overflow: TextOverflow.ellipsis,
+            'Tạo Stop Alarm đầu tiên để bắt đầu theo dõi và cải thiện thói quen của bạn.',
             style: AppTextStyles.bodyMedium.copyWith(
               color: AppColors.of(
                 context,
@@ -261,11 +220,13 @@ class HomeScreen extends ConsumerWidget {
                 AppColors.lightTextSecondary,
               ),
             ),
+            textAlign: TextAlign.center,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
           ),
-          SizedBox(height: compact ? 14 : 18),
+          SizedBox(height: compact ? 20 : 24),
           AppPrimaryButton(
-            label: 'Tạo Stop Alarm đầu tiên',
-            icon: Icons.add_rounded,
+            label: 'Tạo Stop Alarm',
             onTap: () => context.push('/alarm/create'),
           ),
         ],
@@ -716,36 +677,6 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildFirstAlarmCard(BuildContext context) {
-    final compact = Responsive.compactMode(context);
-    return AppGlassCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const AppSectionTitle(title: 'ALL STOP ALARMS'),
-          const SizedBox(height: 14),
-          Text(
-            'Danh sách báo thức sẽ hiện ở đây sau khi bạn tạo alarm đầu tiên.',
-            maxLines: compact ? 3 : 2,
-            overflow: TextOverflow.ellipsis,
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: AppColors.of(
-                context,
-                AppColors.textSecondary,
-                AppColors.lightTextSecondary,
-              ),
-            ),
-          ),
-          const SizedBox(height: 14),
-          AppSecondaryButton(
-            label: 'Tạo Stop Alarm đầu tiên',
-            onTap: () => context.push('/alarm/create'),
-          ),
-        ],
-      ),
-    );
-  }
-
   String _formatCountdown(Duration duration) {
     if (duration.inHours > 0) {
       return '${duration.inHours} giờ ${duration.inMinutes % 60} phút';
@@ -778,6 +709,28 @@ class HomeScreen extends ConsumerWidget {
     if (hour < 12) return 'Chào buổi sáng';
     if (hour < 18) return 'Chào buổi chiều';
     return 'Chào buổi tối';
+  }
+
+  IconData _getThemeIcon(ThemeMode mode) {
+    switch (mode) {
+      case ThemeMode.light:
+        return Icons.light_mode_outlined;
+      case ThemeMode.dark:
+        return Icons.dark_mode_outlined;
+      case ThemeMode.system:
+        return Icons.brightness_auto_outlined;
+    }
+  }
+
+  ThemeMode _getNextThemeMode(ThemeMode current) {
+    switch (current) {
+      case ThemeMode.light:
+        return ThemeMode.dark;
+      case ThemeMode.dark:
+        return ThemeMode.system;
+      case ThemeMode.system:
+        return ThemeMode.light;
+    }
   }
 
   String _formatTime(DateTime dateTime) {

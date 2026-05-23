@@ -127,7 +127,7 @@ class SettingsState {
     return SettingsState(
       settings: settings ?? this.settings,
       isLoading: isLoading ?? this.isLoading,
-      error: error ?? this.error,
+      error: error,
     );
   }
 }

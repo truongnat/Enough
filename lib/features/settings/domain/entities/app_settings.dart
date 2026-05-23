@@ -20,7 +20,7 @@ class AppSettings {
 
   factory AppSettings.defaultSettings() {
     return AppSettings(
-      defaultMode: StopMode.meme,
+      defaultMode: StopMode.general,
       notificationsEnabled: true,
       defaultSnoozeMinutes: 10,
       firstLaunchCompleted: false,
@@ -43,7 +43,7 @@ class AppSettings {
       defaultSnoozeMinutes: defaultSnoozeMinutes ?? this.defaultSnoozeMinutes,
       firstLaunchCompleted: firstLaunchCompleted ?? this.firstLaunchCompleted,
       themeMode: themeMode ?? this.themeMode,
-      userName: userName ?? this.userName,
+      userName: userName,
     );
   }
 }

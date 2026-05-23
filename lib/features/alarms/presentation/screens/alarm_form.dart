@@ -29,6 +29,8 @@ class AlarmForm extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        _buildEventNameSection(context),
+        SizedBox(height: sectionSpacing),
         _buildStopTypeSection(context),
         SizedBox(height: sectionSpacing),
         _buildTimeSection(context),
@@ -94,6 +96,73 @@ class AlarmForm extends StatelessWidget {
               padding: EdgeInsets.all(compact ? 12 : 14),
             );
           },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEventNameSection(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Tên event',
+          style: AppTextStyles.labelLarge.copyWith(
+            color: AppColors.of(
+              context,
+              AppColors.textPrimary,
+              AppColors.lightTextPrimary,
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: TextEditingController(text: state.title),
+          decoration: InputDecoration(
+            hintText: 'Ví dụ: Dừng code trước khi ngủ',
+            filled: true,
+            fillColor: AppColors.of(
+              context,
+              AppColors.cardBgElevated,
+              AppColors.lightCardBgElevated,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: AppColors.of(
+                  context,
+                  AppColors.border,
+                  AppColors.lightBorder,
+                ),
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: AppColors.of(
+                  context,
+                  AppColors.border,
+                  AppColors.lightBorder,
+                ),
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppColors.primary, width: 2),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
+          ),
+          style: AppTextStyles.bodyMedium.copyWith(
+            color: AppColors.of(
+              context,
+              AppColors.textPrimary,
+              AppColors.lightTextPrimary,
+            ),
+          ),
+          onChanged: (value) => notifier.setTitle(value),
         ),
       ],
     );
@@ -401,8 +470,10 @@ class AlarmForm extends StatelessWidget {
         Wrap(
           spacing: 10,
           runSpacing: 10,
-          children: StopMode.values.map((mode) {
-            final isSelected = state.mode == mode;
+          children: [StopMode.general, StopMode.strict].map((mode) {
+            final isSelected =
+                state.mode == mode ||
+                (state.mode == StopMode.meme && mode == StopMode.general);
             return SizedBox(
               width:
                   (MediaQuery.sizeOf(context).width -

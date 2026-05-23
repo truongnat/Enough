@@ -59,8 +59,8 @@ class StatsScreen extends ConsumerWidget {
 
   Widget _buildSummary(BuildContext context, StatsState state) {
     final stats = state.weeklyStats!;
-    final protectedHours = stats.totalProtectedTimeMinutes ~/ 60;
-    final protectedMinutes = stats.totalProtectedTimeMinutes % 60;
+    final protectedHours = stats.protectedTimeMinutes ~/ 60;
+    final protectedMinutes = stats.protectedTimeMinutes % 60;
 
     return AppGlassCard(
       child: Column(
@@ -82,7 +82,7 @@ class StatsScreen extends ConsumerWidget {
               Expanded(
                 child: _metric(
                   context,
-                  '${stats.totalStoppedCount}',
+                  '${stats.completedCount}',
                   'Lần đã dừng',
                   AppColors.primary,
                 ),

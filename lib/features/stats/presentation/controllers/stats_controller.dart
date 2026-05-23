@@ -8,9 +8,7 @@ import '../../../../app/di/providers.dart';
 class StatsController extends StateNotifier<StatsState> {
   final StopSessionRepository _sessionRepository;
 
-  StatsController(
-    this._sessionRepository,
-  ) : super(StatsState.initial()) {
+  StatsController(this._sessionRepository) : super(StatsState.initial()) {
     loadStats();
   }
 
@@ -30,28 +28,45 @@ class StatsController extends StateNotifier<StatsState> {
 
       // Calculate stats
       final totalSessions = weeklySessions.length;
-      final completedSessions = weeklySessions
+      final completedCount = weeklySessions
           .where((s) => s.status == StopSessionStatus.completed)
           .length;
-      final successRate = totalSessions > 0 
-          ? (completedSessions / totalSessions * 100).round() 
-          : 0;
-      final protectedTime = completedSessions * 30; // 30 minutes per session
+      final missedCount = weeklySessions
+          .where((s) => s.status == StopSessionStatus.missed)
+          .length;
+      final snoozedCount = weeklySessions
+          .where((s) => s.status == StopSessionStatus.snoozed)
+          .length;
+
+      final successRate = totalSessions > 0
+          ? (completedCount / totalSessions * 100)
+          : 0.0;
+      final failureRate = totalSessions > 0
+          ? (missedCount / totalSessions * 100)
+          : 0.0;
+      final snoozeRate = totalSessions > 0
+          ? (snoozedCount / totalSessions * 100)
+          : 0.0;
+
+      final protectedTimeMinutes =
+          completedCount * 30; // 30 minutes per session
 
       // Daily breakdown based on completed sessions
       final dailyCounts = _calculateDailyStats(weeklySessions, weekStart);
 
       final weeklyStats = WeeklyStats(
-        totalStoppedCount: completedSessions,
-        totalProtectedTimeMinutes: protectedTime,
-        successRate: successRate.toDouble(),
+        totalSessions: totalSessions,
+        completedCount: completedCount,
+        missedCount: missedCount,
+        snoozedCount: snoozedCount,
+        successRate: successRate,
+        failureRate: failureRate,
+        snoozeRate: snoozeRate,
+        protectedTimeMinutes: protectedTimeMinutes,
         dailyStoppedCounts: dailyCounts,
       );
 
-      state = state.copyWith(
-        weeklyStats: weeklyStats,
-        isLoading: false,
-      );
+      state = state.copyWith(weeklyStats: weeklyStats, isLoading: false);
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
@@ -63,14 +78,17 @@ class StatsController extends StateNotifier<StatsState> {
     return DateTime(date.year, date.month, date.day - (dayOfWeek - 1));
   }
 
-  Map<int, int> _calculateDailyStats(List<StopSession> sessions, DateTime weekStart) {
+  Map<int, int> _calculateDailyStats(
+    List<StopSession> sessions,
+    DateTime weekStart,
+  ) {
     final dailyCounts = <int, int>{};
-    
+
     // Initialize all days with 0
     for (int i = 1; i <= 7; i++) {
       dailyCounts[i] = 0;
     }
-    
+
     for (final session in sessions) {
       if (session.status == StopSessionStatus.completed) {
         final sessionDate = session.startedAt;
@@ -90,18 +108,10 @@ class StatsState {
   final bool isLoading;
   final String? error;
 
-  StatsState({
-    this.weeklyStats,
-    required this.isLoading,
-    this.error,
-  });
+  StatsState({this.weeklyStats, required this.isLoading, this.error});
 
   factory StatsState.initial() {
-    return StatsState(
-      weeklyStats: null,
-      isLoading: false,
-      error: null,
-    );
+    return StatsState(weeklyStats: null, isLoading: false, error: null);
   }
 
   StatsState copyWith({
@@ -118,7 +128,8 @@ class StatsState {
 }
 
 // Provider
-final statsControllerProvider = StateNotifierProvider<StatsController, StatsState>((ref) {
-  final sessionRepository = ref.watch(stopSessionRepositoryProvider);
-  return StatsController(sessionRepository);
-});
+final statsControllerProvider =
+    StateNotifierProvider<StatsController, StatsState>((ref) {
+      final sessionRepository = ref.watch(stopSessionRepositoryProvider);
+      return StatsController(sessionRepository);
+    });

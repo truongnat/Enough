@@ -38,8 +38,9 @@ class NotificationService {
       tz.setLocalLocation(tz.getLocation('Asia/Ho_Chi_Minh'));
     }
 
-    const androidSettings =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings = AndroidInitializationSettings(
+      '@mipmap/ic_launcher',
+    );
     const iosSettings = DarwinInitializationSettings();
 
     const initSettings = InitializationSettings(
@@ -59,7 +60,8 @@ class NotificationService {
   Future<void> _createNotificationChannels() async {
     final androidImplementation = _localNotifications
         .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>();
+          AndroidFlutterLocalNotificationsPlugin
+        >();
     if (androidImplementation == null) return;
 
     final alarmChannel = AndroidNotificationChannel(
@@ -88,7 +90,7 @@ class NotificationService {
 
     await androidImplementation.createNotificationChannel(alarmChannel);
     await androidImplementation.createNotificationChannel(snoozeChannel);
-    
+
     if (kDebugMode) {
       AppLogger.info(
         'Android notification channels created. If sound does not play, uninstall app completely and reinstall, or bump channel ID.',
@@ -101,13 +103,14 @@ class NotificationService {
     if (defaultTargetPlatform == TargetPlatform.android) {
       final androidImplementation = _localNotifications
           .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>();
+            AndroidFlutterLocalNotificationsPlugin
+          >();
       if (androidImplementation != null) {
-        final granted =
-            await androidImplementation.requestNotificationsPermission();
-        final exactAlarmGranted =
-            await androidImplementation.requestExactAlarmsPermission();
-        
+        final granted = await androidImplementation
+            .requestNotificationsPermission();
+        final exactAlarmGranted = await androidImplementation
+            .requestExactAlarmsPermission();
+
         if (kDebugMode) {
           AppLogger.info(
             'Android permissions - Notification: ${granted ?? false}, Exact Alarm: ${exactAlarmGranted ?? false}',
@@ -120,13 +123,14 @@ class NotificationService {
             );
           }
         }
-        
+
         return granted ?? false;
       }
     } else if (defaultTargetPlatform == TargetPlatform.iOS) {
       final iosImplementation = _localNotifications
           .resolvePlatformSpecificImplementation<
-              IOSFlutterLocalNotificationsPlugin>();
+            IOSFlutterLocalNotificationsPlugin
+          >();
       if (iosImplementation != null) {
         final granted = await iosImplementation.requestPermissions(
           alert: true,
@@ -166,6 +170,10 @@ class NotificationService {
     final now = DateTime.now();
     final nextTrigger = alarm.getNextTrigger(now);
 
+    final messageBody = alarm.message?.isNotEmpty == true
+        ? alarm.message
+        : 'Mở app và xác nhận bạn đã dừng lại hoặc snooze thêm 10 phút.';
+
     if (alarm.repeatDays.isEmpty) {
       final id = _getNotificationId(alarm.id, 0);
       final payload = _buildPayload(
@@ -176,7 +184,7 @@ class NotificationService {
       await _localNotifications.zonedSchedule(
         id,
         'ĐẾN GIỜ DỪNG! ${alarm.stopType.displayName.toUpperCase()}',
-        'Mở app và xác nhận bạn đã dừng lại hoặc snooze thêm 10 phút.',
+        messageBody,
         tz.TZDateTime.from(nextTrigger, tz.local),
         _alarmNotificationDetails(payload: payload),
         payload: payload.toJson(),
@@ -202,7 +210,7 @@ class NotificationService {
       await _localNotifications.zonedSchedule(
         _getNotificationId(alarm.id, day.isoValue),
         'ĐẾN GIỜ DỪNG! ${alarm.stopType.displayName.toUpperCase()}',
-        'Mở app và hoàn thành quy trình dừng ngay bây giờ.',
+        messageBody,
         tz.TZDateTime.from(nextDateForDay, tz.local),
         _alarmNotificationDetails(payload: payload),
         payload: payload.toJson(),
@@ -212,7 +220,7 @@ class NotificationService {
         matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
       );
     }
-    
+
     if (kDebugMode) {
       await debugPendingNotifications();
     }
@@ -262,7 +270,10 @@ class NotificationService {
     );
   }
 
-  Future<void> scheduleAlarmSnoozeFromAlarm(StopAlarm alarm, int minutes) async {
+  Future<void> scheduleAlarmSnoozeFromAlarm(
+    StopAlarm alarm,
+    int minutes,
+  ) async {
     final snoozeTrigger = DateTime.now().add(Duration(minutes: minutes));
     final payload = _buildPayload(
       action: NotificationPayload.actionOpenStopSession,
@@ -311,8 +322,7 @@ class NotificationService {
         playSound: true,
         sound: const RawResourceAndroidNotificationSound('reverse_alarm_ring'),
         enableVibration: true,
-        vibrationPattern:
-            Int64List.fromList([0, 700, 250, 700, 250, 1200]),
+        vibrationPattern: Int64List.fromList([0, 700, 250, 700, 250, 1200]),
         audioAttributesUsage: AudioAttributesUsage.alarm,
         actions: <AndroidNotificationAction>[
           AndroidNotificationAction(
@@ -456,7 +466,7 @@ class NotificationService {
 
   Future<void> debugPendingNotifications() async {
     if (!kDebugMode) return;
-    
+
     try {
       final pending = await _localNotifications.pendingNotificationRequests();
       AppLogger.info(
@@ -470,7 +480,12 @@ class NotificationService {
         );
       }
     } catch (e) {
-      AppLogger.error('Error getting pending notifications', e, null, 'NotificationService');
+      AppLogger.error(
+        'Error getting pending notifications',
+        e,
+        null,
+        'NotificationService',
+      );
     }
   }
 }

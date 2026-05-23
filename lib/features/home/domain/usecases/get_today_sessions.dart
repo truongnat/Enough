@@ -13,8 +13,8 @@ class GetTodaySessions {
     final endOfDay = startOfDay.add(const Duration(days: 1));
 
     return allSessions.where((session) {
-      return session.startedAt.isAfter(startOfDay) && 
-             session.startedAt.isBefore(endOfDay);
+      return !session.startedAt.isBefore(startOfDay) &&
+          session.startedAt.isBefore(endOfDay);
     }).toList();
   }
 }

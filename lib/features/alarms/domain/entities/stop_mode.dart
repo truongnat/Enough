@@ -1,7 +1,7 @@
 enum StopMode {
   general,
   strict,
-  meme;
+  meme; // Hidden from UI, kept for data migration
 
   String get displayName {
     switch (this) {
@@ -10,7 +10,7 @@ enum StopMode {
       case StopMode.strict:
         return 'Strict';
       case StopMode.meme:
-        return 'Meme';
+        return 'General'; // Map to General for display
     }
   }
 
@@ -21,7 +21,17 @@ enum StopMode {
       case StopMode.strict:
         return 'Kỷ luật thép, đanh thép cảnh tỉnh';
       case StopMode.meme:
-        return 'Meme châm biếm, vui vẻ thức tỉnh';
+        return 'Nhắc nhở nhẹ nhàng, ấm áp'; // Map to General description
+    }
+  }
+
+  StopMode get visibleMode {
+    switch (this) {
+      case StopMode.meme:
+        return StopMode.general; // Map old meme to general
+      case StopMode.general:
+      case StopMode.strict:
+        return this;
     }
   }
 }

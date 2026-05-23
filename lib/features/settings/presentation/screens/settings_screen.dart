@@ -326,8 +326,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const SizedBox(height: 16.0),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: StopMode.values.map((mode) {
-              final isSelected = settings.defaultMode == mode;
+            children: [StopMode.general, StopMode.strict].map((mode) {
+              final isSelected =
+                  settings.defaultMode == mode ||
+                  (settings.defaultMode == StopMode.meme &&
+                      mode == StopMode.general);
               IconData icon;
               switch (mode) {
                 case StopMode.general:
