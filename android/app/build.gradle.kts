@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.truongdev.reverse_alarm"
+    namespace = "com.truongnat.enough"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -21,10 +21,7 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.truongdev.reverse_alarm"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
+        applicationId = "com.truongnat.enough"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
@@ -33,8 +30,13 @@ android {
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
+            // Configure release signing with keystore
+            // Create keystore with: keytool -genkey -v -keystore ~/upload-keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+            // Set environment variables:
+            // export KEYSTORE_FILE=~/upload-keystore.jks
+            // export KEYSTORE_PASSWORD=your_keystore_password
+            // export KEY_ALIAS=upload
+            // export KEY_PASSWORD=your_key_password
             signingConfig = signingConfigs.getByName("debug")
         }
     }
