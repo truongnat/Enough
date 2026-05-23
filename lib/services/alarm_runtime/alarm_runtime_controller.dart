@@ -51,6 +51,8 @@ class AlarmRuntimeState {
 }
 
 class AlarmRuntimeController extends StateNotifier<AlarmRuntimeState> {
+  static const Duration foregroundDueTolerance = Duration(minutes: 3);
+
   AlarmRuntimeController(
     this._alarmRepository,
     this._settingsRepository,
@@ -249,7 +251,7 @@ class AlarmRuntimeController extends StateNotifier<AlarmRuntimeState> {
     if (scheduled.isBefore(lastCheck.subtract(const Duration(seconds: 2)))) {
       return null;
     }
-    if (now.difference(scheduled) > const Duration(minutes: 1)) {
+    if (now.difference(scheduled) > foregroundDueTolerance) {
       return null;
     }
     return scheduled;

@@ -4,6 +4,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+import '../../core/utils/logger.dart';
 import '../../features/alarms/domain/entities/stop_alarm.dart';
 import '../../features/stop_session/domain/entities/stop_session.dart';
 import 'notification_payload.dart';
@@ -87,6 +88,13 @@ class NotificationService {
 
     await androidImplementation.createNotificationChannel(alarmChannel);
     await androidImplementation.createNotificationChannel(snoozeChannel);
+    
+    if (kDebugMode) {
+      AppLogger.info(
+        'Android notification channels created. If sound does not play, uninstall app completely and reinstall, or bump channel ID.',
+        'NotificationService',
+      );
+    }
   }
 
   Future<bool> requestPermissionsIfNeeded() async {
@@ -99,7 +107,21 @@ class NotificationService {
             await androidImplementation.requestNotificationsPermission();
         final exactAlarmGranted =
             await androidImplementation.requestExactAlarmsPermission();
-        return (granted ?? false) && (exactAlarmGranted ?? false);
+        
+        if (kDebugMode) {
+          AppLogger.info(
+            'Android permissions - Notification: ${granted ?? false}, Exact Alarm: ${exactAlarmGranted ?? false}',
+            'NotificationService',
+          );
+          if (!(exactAlarmGranted ?? false)) {
+            AppLogger.warning(
+              'Exact alarm permission denied. Alarms may not fire reliably on Android 12+.',
+              'NotificationService',
+            );
+          }
+        }
+        
+        return granted ?? false;
       }
     } else if (defaultTargetPlatform == TargetPlatform.iOS) {
       final iosImplementation = _localNotifications
@@ -111,15 +133,30 @@ class NotificationService {
           badge: true,
           sound: true,
         );
+        if (kDebugMode) {
+          AppLogger.info(
+            'iOS permissions granted: ${granted ?? false}',
+            'NotificationService',
+          );
+        }
         return granted ?? false;
       }
     }
     return true;
   }
 
+  int _stableIdFromString(String input) {
+    var hash = 0x811c9dc5; // FNV-1a
+    for (final codeUnit in input.codeUnits) {
+      hash ^= codeUnit;
+      hash = (hash * 0x01000193) & 0x7fffffff;
+    }
+    return hash % 100000;
+  }
+
   int _getNotificationId(String alarmId, int? dayValue) {
-    final baseHash = alarmId.hashCode.abs() % 100000;
-    return baseHash * 10 + (dayValue ?? 0);
+    final base = _stableIdFromString(alarmId);
+    return base * 10 + (dayValue ?? 0);
   }
 
   Future<void> scheduleStopAlarm(StopAlarm alarm) async {
@@ -172,7 +209,12 @@ class NotificationService {
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
+        matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
       );
+    }
+    
+    if (kDebugMode) {
+      await debugPendingNotifications();
     }
   }
 
@@ -275,7 +317,7 @@ class NotificationService {
         actions: <AndroidNotificationAction>[
           AndroidNotificationAction(
             stopActionId,
-            'DỪNG',
+            'MỞ',
             showsUserInterface: true,
             cancelNotification: true,
           ),
@@ -291,7 +333,7 @@ class NotificationService {
         presentAlert: true,
         presentBadge: true,
         presentSound: true,
-        interruptionLevel: InterruptionLevel.critical,
+        interruptionLevel: InterruptionLevel.timeSensitive,
       ),
     );
   }
@@ -317,7 +359,7 @@ class NotificationService {
         actions: <AndroidNotificationAction>[
           AndroidNotificationAction(
             stopActionId,
-            'DỪNG',
+            'MỞ',
             showsUserInterface: true,
             cancelNotification: true,
           ),
@@ -409,6 +451,26 @@ class NotificationService {
       return rawPayload;
     } catch (_) {
       return rawPayload;
+    }
+  }
+
+  Future<void> debugPendingNotifications() async {
+    if (!kDebugMode) return;
+    
+    try {
+      final pending = await _localNotifications.pendingNotificationRequests();
+      AppLogger.info(
+        'Pending notifications count: ${pending.length}',
+        'NotificationService',
+      );
+      for (final notification in pending) {
+        AppLogger.info(
+          'Pending notification - ID: ${notification.id}, Title: ${notification.title}, Body: ${notification.body}, Payload: ${notification.payload}',
+          'NotificationService',
+        );
+      }
+    } catch (e) {
+      AppLogger.error('Error getting pending notifications', e, null, 'NotificationService');
     }
   }
 }
