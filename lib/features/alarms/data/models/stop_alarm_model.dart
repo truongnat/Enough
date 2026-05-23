@@ -15,16 +15,18 @@ class StopAlarmModel {
       customTypeLabel: json['customTypeLabel'] as String?,
       timeOfDayHour: json['timeOfDayHour'] as int,
       timeOfDayMinute: json['timeOfDayMinute'] as int,
-      repeatDays: (json['repeatDays'] as List<dynamic>?)
+      repeatDays:
+          (json['repeatDays'] as List<dynamic>?)
               ?.map((d) => RepeatDay.values.firstWhere((e) => e.name == d))
               .toList() ??
           [],
       mode: StopMode.values.firstWhere(
         (e) => e.name == json['mode'],
-        orElse: () => StopMode.gentle,
+        orElse: () => StopMode.general,
       ),
       protocolId: json['protocolId'] as String,
       isEnabled: json['isEnabled'] as bool? ?? true,
+      message: json['message'] as String?,
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
     );
@@ -42,6 +44,7 @@ class StopAlarmModel {
       'mode': alarm.mode.name,
       'protocolId': alarm.protocolId,
       'isEnabled': alarm.isEnabled,
+      'message': alarm.message,
       'createdAt': alarm.createdAt.toIso8601String(),
       'updatedAt': alarm.updatedAt.toIso8601String(),
     };

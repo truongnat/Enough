@@ -3,21 +3,25 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/usecases/get_next_alarm.dart';
 import '../../domain/usecases/get_today_stats.dart';
 import '../../domain/usecases/get_latest_receipt.dart';
+import '../../domain/usecases/get_today_sessions.dart';
 import '../../../../app/di/providers.dart';
 import '../../../alarms/domain/entities/stop_alarm.dart';
 import '../../../alarms/domain/repositories/alarm_repository.dart';
 import '../../../receipts/domain/entities/stop_receipt.dart';
+import '../../../stop_session/domain/entities/stop_session.dart';
 
 class HomeController extends StateNotifier<HomeState> {
   final GetNextAlarm _getNextAlarm;
   final GetTodayStats _getTodayStats;
   final GetLatestReceipt _getLatestReceipt;
+  final GetTodaySessions _getTodaySessions;
   final AlarmRepository _alarmRepository;
 
   HomeController(
     this._getNextAlarm,
     this._getTodayStats,
     this._getLatestReceipt,
+    this._getTodaySessions,
     this._alarmRepository,
   ) : super(HomeState.initial()) {
     loadData();
@@ -25,13 +29,14 @@ class HomeController extends StateNotifier<HomeState> {
 
   Future<void> loadData() async {
     state = state.copyWith(isLoading: true);
-    
+
     try {
       final nextAlarm = await _getNextAlarm();
       final stats = await _getTodayStats();
       final latestReceipt = await _getLatestReceipt();
+      final todaySessions = await _getTodaySessions();
       final allAlarms = await _alarmRepository.getAlarms();
-      
+
       // Sort alarms by next trigger time ascending
       final now = DateTime.now();
       allAlarms.sort((a, b) {
@@ -39,9 +44,14 @@ class HomeController extends StateNotifier<HomeState> {
         final triggerB = b.getNextTrigger(now);
         return triggerA.compareTo(triggerB);
       });
-      
+
+      // Sort sessions by startedAt descending (newest first)
+      todaySessions.sort((a, b) => b.startedAt.compareTo(a.startedAt));
+
       if (kDebugMode) {
-        debugPrint('[HomeController] Loaded data. NextAlarm: ${nextAlarm?.id ?? 'null'} (${nextAlarm?.timeOfDayHour}:${nextAlarm?.timeOfDayMinute}), Alarms count: ${allAlarms.length}, StoppedCount: ${stats['stoppedCount']}, LatestReceipt: ${latestReceipt?.id ?? 'null'}');
+        debugPrint(
+          '[HomeController] Loaded data. NextAlarm: ${nextAlarm?.id ?? 'null'} (${nextAlarm?.timeOfDayHour}:${nextAlarm?.timeOfDayMinute}), Alarms count: ${allAlarms.length}, StoppedCount: ${stats['stoppedCount']}, LatestReceipt: ${latestReceipt?.id ?? 'null'}, TodaySessions: ${todaySessions.length}',
+        );
       }
 
       state = state.copyWith(
@@ -49,6 +59,7 @@ class HomeController extends StateNotifier<HomeState> {
         alarms: allAlarms,
         stoppedCount: stats['stoppedCount'] ?? 0,
         latestReceipt: latestReceipt,
+        todaySessions: todaySessions,
         isLoading: false,
         error: null,
       );
@@ -70,6 +81,7 @@ class HomeState {
   final List<StopAlarm> alarms;
   final int stoppedCount;
   final StopReceipt? latestReceipt;
+  final List<StopSession>? todaySessions;
   final bool isLoading;
   final String? error;
 
@@ -78,6 +90,7 @@ class HomeState {
     required this.alarms,
     required this.stoppedCount,
     this.latestReceipt,
+    this.todaySessions,
     required this.isLoading,
     this.error,
   });
@@ -88,16 +101,20 @@ class HomeState {
       alarms: const [],
       stoppedCount: 0,
       latestReceipt: null,
+      todaySessions: const [],
       isLoading: false,
       error: null,
     );
   }
+
+  List<StopSession> get safeTodaySessions => todaySessions ?? [];
 
   HomeState copyWith({
     Object? nextAlarm = _unset,
     List<StopAlarm>? alarms,
     int? stoppedCount,
     Object? latestReceipt = _unset,
+    List<StopSession>? todaySessions,
     bool? isLoading,
     Object? error = _unset,
   }) {
@@ -110,6 +127,7 @@ class HomeState {
       latestReceipt: identical(latestReceipt, _unset)
           ? this.latestReceipt
           : latestReceipt as StopReceipt?,
+      todaySessions: todaySessions ?? this.todaySessions,
       isLoading: isLoading ?? this.isLoading,
       error: identical(error, _unset) ? this.error : error as String?,
     );
@@ -117,14 +135,24 @@ class HomeState {
 }
 
 // Provider
-final homeControllerProvider = StateNotifierProvider<HomeController, HomeState>((ref) {
-  final alarmRepository = ref.watch(alarmRepositoryProvider);
-  final receiptRepository = ref.watch(receiptRepositoryProvider);
-  final sessionDatasource = ref.watch(stopSessionLocalDatasourceProvider);
-  
-  final getNextAlarm = GetNextAlarm(alarmRepository);
-  final getTodayStats = GetTodayStats(receiptRepository, sessionDatasource);
-  final getLatestReceipt = GetLatestReceipt(receiptRepository);
-  
-  return HomeController(getNextAlarm, getTodayStats, getLatestReceipt, alarmRepository);
-});
+final homeControllerProvider = StateNotifierProvider<HomeController, HomeState>(
+  (ref) {
+    final alarmRepository = ref.watch(alarmRepositoryProvider);
+    final receiptRepository = ref.watch(receiptRepositoryProvider);
+    final sessionDatasource = ref.watch(stopSessionLocalDatasourceProvider);
+    final sessionRepository = ref.watch(stopSessionRepositoryProvider);
+
+    final getNextAlarm = GetNextAlarm(alarmRepository);
+    final getTodayStats = GetTodayStats(receiptRepository, sessionDatasource);
+    final getLatestReceipt = GetLatestReceipt(receiptRepository);
+    final getTodaySessions = GetTodaySessions(sessionRepository);
+
+    return HomeController(
+      getNextAlarm,
+      getTodayStats,
+      getLatestReceipt,
+      getTodaySessions,
+      alarmRepository,
+    );
+  },
+);

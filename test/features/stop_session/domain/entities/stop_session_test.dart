@@ -34,33 +34,39 @@ void main() {
       expect(session.canComplete, isTrue);
     });
 
-    test('isMissed should return true for active session older than 2 hours', () {
-      final session = StopSession(
-        id: '1',
-        alarmId: 'alarm1',
-        stopType: StopType.coding,
-        startedAt: DateTime.now().subtract(const Duration(hours: 3)),
-        status: StopSessionStatus.active,
-        snoozeCount: 0,
-        checkedStepIndexes: [],
-      );
+    test(
+      'isMissed should return true for active session older than 2 hours',
+      () {
+        final session = StopSession(
+          id: '1',
+          alarmId: 'alarm1',
+          stopType: StopType.coding,
+          startedAt: DateTime.now().subtract(const Duration(hours: 3)),
+          status: StopSessionStatus.active,
+          snoozeCount: 0,
+          checkedStepIndexes: [],
+        );
 
-      expect(session.isMissed(DateTime.now()), isTrue);
-    });
+        expect(session.isMissed(DateTime.now()), isTrue);
+      },
+    );
 
-    test('isMissed should return false for active session younger than 2 hours', () {
-      final session = StopSession(
-        id: '1',
-        alarmId: 'alarm1',
-        stopType: StopType.coding,
-        startedAt: DateTime.now().subtract(const Duration(hours: 1)),
-        status: StopSessionStatus.active,
-        snoozeCount: 0,
-        checkedStepIndexes: [],
-      );
+    test(
+      'isMissed should return false for active session younger than 2 hours',
+      () {
+        final session = StopSession(
+          id: '1',
+          alarmId: 'alarm1',
+          stopType: StopType.coding,
+          startedAt: DateTime.now().subtract(const Duration(hours: 1)),
+          status: StopSessionStatus.active,
+          snoozeCount: 0,
+          checkedStepIndexes: [],
+        );
 
-      expect(session.isMissed(DateTime.now()), isFalse);
-    });
+        expect(session.isMissed(DateTime.now()), isFalse);
+      },
+    );
 
     test('isMissed should return false for completed session', () {
       final session = StopSession(
@@ -77,8 +83,8 @@ void main() {
       expect(session.isMissed(DateTime.now()), isFalse);
     });
 
-    test('getWittyQuote should return gentle mode quote', () {
-      final quote = StopSession.getWittyQuote(StopMode.gentle, 0);
+    test('getWittyQuote should return general mode quote', () {
+      final quote = StopSession.getWittyQuote(StopMode.general, 0);
       expect(quote, isNotEmpty);
       expect(quote.contains('Đủ rồi'), isTrue);
     });

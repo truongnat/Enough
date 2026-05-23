@@ -23,6 +23,7 @@ class AlarmState {
   final StopMode mode;
   final String protocolId;
   final bool isEnabled;
+  final String? message;
   final DateTime? createdAt;
   final bool isSaving;
   final bool isSaved;
@@ -39,6 +40,7 @@ class AlarmState {
     required this.mode,
     required this.protocolId,
     required this.isEnabled,
+    this.message,
     this.createdAt,
     this.isSaving = false,
     this.isSaved = false,
@@ -57,6 +59,7 @@ class AlarmState {
       mode: StopMode.meme,
       protocolId: StopProtocol.getDefaultTemplate(StopType.coding).id,
       isEnabled: true,
+      message: null,
       createdAt: null,
       isSaving: false,
       isSaved: false,
@@ -75,6 +78,7 @@ class AlarmState {
     StopMode? mode,
     String? protocolId,
     bool? isEnabled,
+    String? message,
     DateTime? createdAt,
     bool? isSaving,
     bool? isSaved,
@@ -91,6 +95,7 @@ class AlarmState {
       mode: mode ?? this.mode,
       protocolId: protocolId ?? this.protocolId,
       isEnabled: isEnabled ?? this.isEnabled,
+      message: message ?? this.message,
       createdAt: createdAt ?? this.createdAt,
       isSaving: isSaving ?? this.isSaving,
       isSaved: isSaved ?? this.isSaved,
@@ -138,6 +143,12 @@ class AlarmController extends StateNotifier<AlarmState> {
     state = state.copyWith(isEnabled: enabled);
   }
 
+  void setMessage(String? message) {
+    state = state.copyWith(
+      message: message?.trim().isEmpty ?? true ? null : message?.trim(),
+    );
+  }
+
   void setCustomTypeLabel(String label) {
     state = state.copyWith(customTypeLabel: label);
   }
@@ -153,7 +164,7 @@ class AlarmController extends StateNotifier<AlarmState> {
       // Request notification permission before saving alarm
       final notificationService = _notificationService;
       await notificationService.requestPermissionsIfNeeded();
-      
+
       final now = DateTime.now();
       final alarm = StopAlarm(
         id: state.alarmId ?? Uuid().v4(),
@@ -166,6 +177,7 @@ class AlarmController extends StateNotifier<AlarmState> {
         mode: state.mode,
         protocolId: state.protocolId,
         isEnabled: state.isEnabled,
+        message: state.message,
         createdAt: state.createdAt ?? now,
         updatedAt: now,
       );
@@ -179,7 +191,9 @@ class AlarmController extends StateNotifier<AlarmState> {
       await _notificationService.rescheduleAll(await _repository.getAlarms());
 
       if (kDebugMode) {
-        debugPrint('[AlarmController] Saved alarm id=${alarm.id}, enabled=${alarm.isEnabled}, time=${alarm.timeOfDayHour}:${alarm.timeOfDayMinute}, repeatDaysCount=${alarm.repeatDays.length}');
+        debugPrint(
+          '[AlarmController] Saved alarm id=${alarm.id}, enabled=${alarm.isEnabled}, time=${alarm.timeOfDayHour}:${alarm.timeOfDayMinute}, repeatDaysCount=${alarm.repeatDays.length}',
+        );
       }
 
       state = state.copyWith(
@@ -237,6 +251,7 @@ class AlarmController extends StateNotifier<AlarmState> {
         mode: alarm.mode,
         protocolId: alarm.protocolId,
         isEnabled: alarm.isEnabled,
+        message: alarm.message,
         createdAt: alarm.createdAt,
         isSaving: false,
       );
@@ -250,14 +265,15 @@ class AlarmController extends StateNotifier<AlarmState> {
   }
 }
 
-final alarmControllerProvider = StateNotifierProvider<AlarmController, AlarmState>((ref) {
-  final repository = ref.watch(alarmRepositoryProvider);
-  final notificationService = ref.watch(notificationServiceProvider);
-  
-  return AlarmController(
-    CreateAlarm(repository),
-    UpdateAlarm(repository),
-    repository,
-    notificationService,
-  );
-});
+final alarmControllerProvider =
+    StateNotifierProvider<AlarmController, AlarmState>((ref) {
+      final repository = ref.watch(alarmRepositoryProvider);
+      final notificationService = ref.watch(notificationServiceProvider);
+
+      return AlarmController(
+        CreateAlarm(repository),
+        UpdateAlarm(repository),
+        repository,
+        notificationService,
+      );
+    });

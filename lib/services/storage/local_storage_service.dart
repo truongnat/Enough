@@ -25,9 +25,7 @@ class LocalStorageService {
 
   // General Alarms operations
   List<Map<String, dynamic>> getAlarms() {
-    return _alarmsBox.values
-        .map((e) => Map<String, dynamic>.from(e))
-        .toList();
+    return _alarmsBox.values.map((e) => Map<String, dynamic>.from(e)).toList();
   }
 
   Future<void> saveAlarm(String id, Map<String, dynamic> alarmJson) async {
@@ -60,7 +58,10 @@ class LocalStorageService {
     return Map<String, dynamic>.from(value);
   }
 
-  Future<void> saveSettings(String key, Map<String, dynamic> settingsJson) async {
+  Future<void> saveSettings(
+    String key,
+    Map<String, dynamic> settingsJson,
+  ) async {
     await _settingsBox.put(key, settingsJson);
   }
 
@@ -84,5 +85,58 @@ class LocalStorageService {
 
   Future<void> deleteSession(String id) async {
     await _sessionsBox.delete(id);
+  }
+
+  // Export all data as JSON
+  Map<String, dynamic> exportAllData() {
+    return {
+      'alarms': getAlarms(),
+      'receipts': getReceipts(),
+      'sessions': getSessions(),
+      'settings': getSettings('appSettings'),
+      'exportedAt': DateTime.now().toIso8601String(),
+      'version': '1.0',
+    };
+  }
+
+  // Import data from JSON
+  Future<void> importData(Map<String, dynamic> data) async {
+    // Clear existing data
+    await clearAllData();
+
+    // Import alarms
+    if (data['alarms'] != null) {
+      for (var alarm in data['alarms'] as List) {
+        if (alarm is Map<String, dynamic>) {
+          await saveAlarm(alarm['id'] as String, alarm);
+        }
+      }
+    }
+
+    // Import receipts
+    if (data['receipts'] != null) {
+      for (var receipt in data['receipts'] as List) {
+        if (receipt is Map<String, dynamic>) {
+          await saveReceipt(receipt['id'] as String, receipt);
+        }
+      }
+    }
+
+    // Import sessions
+    if (data['sessions'] != null) {
+      for (var session in data['sessions'] as List) {
+        if (session is Map<String, dynamic>) {
+          await saveSession(session['id'] as String, session);
+        }
+      }
+    }
+
+    // Import settings
+    if (data['settings'] != null && data['settings'] is Map<String, dynamic>) {
+      await saveSettings(
+        'appSettings',
+        data['settings'] as Map<String, dynamic>,
+      );
+    }
   }
 }

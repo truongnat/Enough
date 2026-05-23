@@ -29,7 +29,7 @@ class Copywriting {
 
   static String getStopSessionMessage(String mode) {
     switch (mode) {
-      case 'gentle':
+      case 'general':
         return 'Đủ rồi. Phần còn lại để ngày mai.';
       case 'strict':
         return 'Mày đang không productivity nữa. Mày đang tự bào pin não.';
@@ -44,7 +44,8 @@ class Copywriting {
   static const String completeButton = 'Tôi đã dừng lại';
   static const String snoozeButton = 'Cho tôi thêm 10 phút...';
   static const String snoozeWarning = 'Đừng tự dối lòng!';
-  static const String mustCheckStep = 'Bạn cần tick ít nhất 1 bước để hoàn thành';
+  static const String mustCheckStep =
+      'Bạn cần tick ít nhất 1 bước để hoàn thành';
 
   // Receipt
   static const String receiptTitle = 'BIÊN LAI DỪNG';

@@ -11,6 +11,7 @@ import '../core/widgets/product_components.dart';
 import '../services/alarm_runtime/alarm_runtime_controller.dart';
 import '../services/notifications/notification_service.dart';
 import '../services/notifications/notification_tap_controller.dart';
+import '../features/settings/presentation/controllers/settings_controller.dart';
 
 class App extends ConsumerStatefulWidget {
   const App({super.key});
@@ -66,13 +67,15 @@ class _AppState extends ConsumerState<App> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     final router = ref.watch(routerProvider);
+    final settingsState = ref.watch(settingsControllerProvider);
+    final themeMode = settingsState.settings?.themeMode ?? ThemeMode.dark;
 
     return MaterialApp.router(
       title: AppConstants.appName,
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.darkTheme,
+      theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.dark,
+      themeMode: themeMode,
       routerConfig: router,
       builder: (context, child) {
         final clampedMedia = Responsive.clampTextScale(context);
@@ -131,18 +134,56 @@ class _ForegroundAlarmModalHost extends ConsumerWidget {
                       style: AppTextStyles.stopTitle,
                     ),
                     const SizedBox(height: 16),
-                    AppIllustrationPlaceholder(
-                      icon: Icons.notifications_active_rounded,
-                      label: 'TODO(ui-assets)\nforeground alarm art',
+                    Container(
                       width: 190,
                       height: 170,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(24),
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            AppColors.primary.withValues(alpha: 0.25),
+                            AppColors.warning.withValues(alpha: 0.15),
+                          ],
+                        ),
+                        border: Border.all(
+                          color: AppColors.of(
+                            context,
+                            AppColors.border,
+                            AppColors.lightBorder,
+                          ),
+                        ),
+                      ),
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.notifications_active_rounded,
+                              size: 72,
+                              color: AppColors.primary.withValues(alpha: 0.9),
+                            ),
+                            const SizedBox(height: 8),
+                            Icon(
+                              Icons.access_alarms_rounded,
+                              size: 36,
+                              color: AppColors.warning.withValues(alpha: 0.8),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 16),
                     Text(
                       'Mày không phải máy. Đừng tự biến mình thành server 24/7.',
                       textAlign: TextAlign.center,
                       style: AppTextStyles.bodyLarge.copyWith(
-                        color: AppColors.textSecondary,
+                        color: AppColors.of(
+                          context,
+                          AppColors.textSecondary,
+                          AppColors.lightTextSecondary,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 22),

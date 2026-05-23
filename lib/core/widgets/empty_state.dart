@@ -29,21 +29,28 @@ class EmptyState extends StatelessWidget {
               Icon(
                 icon,
                 size: 64,
-                color: AppColors.textTertiary,
+                color: AppColors.of(
+                  context,
+                  AppColors.textTertiary,
+                  AppColors.lightTextTertiary,
+                ),
               ),
               const SizedBox(height: AppConstants.paddingL),
             ],
             Text(
               message,
-              style: AppTextStyles.bodySecondary(AppColors.textSecondary),
+              style: AppTextStyles.bodySecondary(
+                AppColors.of(
+                  context,
+                  AppColors.textSecondary,
+                  AppColors.lightTextSecondary,
+                ),
+              ),
               textAlign: TextAlign.center,
             ),
             if (actionLabel != null && onAction != null) ...[
               const SizedBox(height: AppConstants.paddingL),
-              ElevatedButton(
-                onPressed: onAction,
-                child: Text(actionLabel!),
-              ),
+              ElevatedButton(onPressed: onAction, child: Text(actionLabel!)),
             ],
           ],
         ),

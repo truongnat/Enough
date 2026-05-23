@@ -13,6 +13,7 @@ class StopAlarm {
   final StopMode mode;
   final String protocolId;
   final bool isEnabled;
+  final String? message;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -27,6 +28,7 @@ class StopAlarm {
     required this.mode,
     required this.protocolId,
     required this.isEnabled,
+    this.message,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -92,6 +94,7 @@ class StopAlarm {
     StopMode? mode,
     String? protocolId,
     bool? isEnabled,
+    String? message,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -106,6 +109,7 @@ class StopAlarm {
       mode: mode ?? this.mode,
       protocolId: protocolId ?? this.protocolId,
       isEnabled: isEnabled ?? this.isEnabled,
+      message: message ?? this.message,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

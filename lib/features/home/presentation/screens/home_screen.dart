@@ -8,6 +8,8 @@ import '../../../../core/widgets/product_components.dart';
 import '../../../alarms/domain/entities/repeat_day.dart';
 import '../../../alarms/domain/entities/stop_alarm.dart';
 import '../../../alarms/domain/entities/stop_type.dart';
+import '../../../stop_session/domain/entities/stop_session.dart';
+import '../../../settings/presentation/controllers/settings_controller.dart';
 import '../controllers/home_controller.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -24,7 +26,7 @@ class HomeScreen extends ConsumerWidget {
     final bottomPadding = 120.0 + MediaQuery.paddingOf(context).bottom;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: AppGradientBackground(
         padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
         child: SafeArea(
@@ -41,7 +43,7 @@ class HomeScreen extends ConsumerWidget {
                       ),
                       sliver: SliverList(
                         delegate: SliverChildListDelegate([
-                          _buildTopBar(context),
+                          _buildTopBar(context, ref),
                           SizedBox(height: compact ? 14 : 18),
                           _buildHeadline(context),
                           SizedBox(height: sectionSpacing),
@@ -70,24 +72,36 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildTopBar(BuildContext context) {
+  Widget _buildTopBar(BuildContext context, WidgetRef ref) {
     final greeting = _greetingForHour(DateTime.now().hour);
+    final settingsState = ref.watch(settingsControllerProvider);
+    final userName = settingsState.settings?.userName;
+    final displayName = userName?.isNotEmpty == true ? userName : null;
+
     return Row(
       children: [
         Expanded(
           child: Text(
-            '$greeting, Trường 👋',
+            displayName != null ? '$greeting, $displayName 👋' : '$greeting 👋',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: AppTextStyles.bodyLarge.copyWith(
-              color: AppColors.textSecondary,
+              color: AppColors.of(
+                context,
+                AppColors.textSecondary,
+                AppColors.lightTextSecondary,
+              ),
             ),
           ),
         ),
         AppRoundIconButton(
           icon: Icons.settings_outlined,
           onTap: () => context.go('/settings'),
-          backgroundColor: AppColors.cardBgGlass,
+          backgroundColor: AppColors.of(
+            context,
+            AppColors.cardBgGlass,
+            AppColors.lightCardBgGlass,
+          ),
         ),
       ],
     );
@@ -96,11 +110,16 @@ class HomeScreen extends ConsumerWidget {
   Widget _buildHeadline(BuildContext context) {
     final compact = Responsive.compactMode(context);
     return Text(
-      'Hôm nay mày muốn dừng điều gì?',
+      'Hôm nay bạn muốn dừng điều gì?',
       maxLines: compact ? 3 : 2,
       overflow: TextOverflow.ellipsis,
       style: AppTextStyles.h1.copyWith(
         fontSize: compact ? 32 : AppTextStyles.h1.fontSize,
+        color: AppColors.of(
+          context,
+          AppColors.textPrimary,
+          AppColors.lightTextPrimary,
+        ),
       ),
     );
   }
@@ -121,9 +140,27 @@ class HomeScreen extends ConsumerWidget {
       onTap: () => context.push('/alarm/edit/${alarm.id}'),
       trailing: compact
           ? null
-          : AppIllustrationPlaceholder(
-              icon: _stopTypeIcon(alarm.stopType),
-              label: 'TODO(ui-assets)\nhero illustration',
+          : Container(
+              width: 140,
+              height: 140,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppColors.primary.withValues(alpha: 0.15),
+                    AppColors.primary.withValues(alpha: 0.05),
+                  ],
+                ),
+              ),
+              child: Center(
+                child: Icon(
+                  _stopTypeIcon(alarm.stopType),
+                  size: 64,
+                  color: AppColors.primary.withValues(alpha: 0.8),
+                ),
+              ),
             ),
     );
   }
@@ -139,20 +176,76 @@ class HomeScreen extends ConsumerWidget {
           Text(
             'Tiếp theo',
             style: AppTextStyles.bodyMedium.copyWith(
-              color: AppColors.textSecondary,
+              color: AppColors.of(
+                context,
+                AppColors.textSecondary,
+                AppColors.lightTextSecondary,
+              ),
             ),
           ),
           SizedBox(height: compact ? 12 : 16),
-          AppIllustrationPlaceholder(
-            icon: Icons.alarm_add_rounded,
-            label: 'TODO(ui-assets)\nnew user illustration',
+          Container(
             width: double.infinity,
             height: compact ? 132 : 170,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  AppColors.of(
+                    context,
+                    AppColors.cardBgElevated,
+                    AppColors.lightCardBgElevated,
+                  ),
+                  AppColors.of(
+                    context,
+                    AppColors.backgroundSecondary,
+                    AppColors.lightBackgroundSecondary,
+                  ),
+                ],
+              ),
+              border: Border.all(
+                color: AppColors.of(
+                  context,
+                  AppColors.border,
+                  AppColors.lightBorder,
+                ),
+              ),
+            ),
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.add_circle_outline_rounded,
+                    size: 48,
+                    color: AppColors.primary.withValues(alpha: 0.7),
+                  ),
+                  const SizedBox(height: 8),
+                  Icon(
+                    Icons.alarm_rounded,
+                    size: 32,
+                    color: AppColors.of(
+                      context,
+                      AppColors.textSecondary,
+                      AppColors.lightTextSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
           SizedBox(height: compact ? 14 : 18),
           Text(
             'Chưa có Stop Alarm nào',
-            style: AppTextStyles.h3,
+            style: AppTextStyles.h3.copyWith(
+              color: AppColors.of(
+                context,
+                AppColors.textPrimary,
+                AppColors.lightTextPrimary,
+              ),
+            ),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
@@ -162,7 +255,11 @@ class HomeScreen extends ConsumerWidget {
             maxLines: compact ? 3 : 2,
             overflow: TextOverflow.ellipsis,
             style: AppTextStyles.bodyMedium.copyWith(
-              color: AppColors.textSecondary,
+              color: AppColors.of(
+                context,
+                AppColors.textSecondary,
+                AppColors.lightTextSecondary,
+              ),
             ),
           ),
           SizedBox(height: compact ? 14 : 18),
@@ -181,57 +278,160 @@ class HomeScreen extends ConsumerWidget {
     final protectedHours = protectedMinutes ~/ 60;
     final remainingMinutes = protectedMinutes % 60;
     final compact = Responsive.compactMode(context);
+    final visibleSessions = state.safeTodaySessions.take(3).toList();
 
     return AppGlassCard(
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Đã dừng hôm nay',
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: AppColors.of(
+                          context,
+                          AppColors.textSecondary,
+                          AppColors.lightTextSecondary,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      '${state.stoppedCount} lần',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.h2.copyWith(
+                        fontSize: compact ? 34 : 42,
+                        color: AppColors.of(
+                          context,
+                          AppColors.textPrimary,
+                          AppColors.lightTextPrimary,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Bạn đã bảo vệ được ${protectedHours}h ${remainingMinutes.toString().padLeft(2, '0')}m năng lượng quý giá ✨',
+                      maxLines: compact ? 3 : 4,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: AppColors.of(
+                          context,
+                          AppColors.textSecondary,
+                          AppColors.lightTextSecondary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(width: compact ? 12 : 16),
+              Container(
+                width: compact ? 68 : 82,
+                height: compact ? 68 : 82,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.primarySoft,
+                  border: Border.all(
+                    color: AppColors.primary.withValues(alpha: 0.45),
+                  ),
+                ),
+                child: const Icon(
+                  Icons.workspace_premium_rounded,
+                  color: AppColors.warning,
+                  size: 34,
+                ),
+              ),
+            ],
+          ),
+          if (visibleSessions.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Divider(
+              height: 1,
+              color: AppColors.of(
+                context,
+                AppColors.divider,
+                AppColors.lightDivider,
+              ),
+            ),
+            const SizedBox(height: 12),
+            ...visibleSessions.map(
+              (session) => _buildSessionItem(context, session, compact),
+            ),
+            if (state.safeTodaySessions.length > 3) ...[
+              const SizedBox(height: 8),
+              GestureDetector(
+                onTap: () => context.go('/history'),
+                child: Text(
+                  'Xem tất cả (${state.safeTodaySessions.length})',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSessionItem(
+    BuildContext context,
+    StopSession session,
+    bool compact,
+  ) {
+    final time =
+        '${session.startedAt.hour.toString().padLeft(2, '0')}:${session.startedAt.minute.toString().padLeft(2, '0')}';
+    final icon = _stopTypeIcon(session.stopType);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: AppColors.primarySoft,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: AppColors.primary, size: 18),
+          ),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Đã dừng hôm nay',
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: 14),
-                Text(
-                  '${state.stoppedCount} lần',
+                  session.stopType.displayName.toUpperCase(),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.h2.copyWith(fontSize: compact ? 34 : 42),
+                  style: AppTextStyles.labelMedium.copyWith(
+                    color: AppColors.primary,
+                  ),
                 ),
-                const SizedBox(height: 10),
                 Text(
-                  'Bạn đã bảo vệ được ${protectedHours}h ${remainingMinutes.toString().padLeft(2, '0')}m năng lượng quý giá ✨',
-                  maxLines: compact ? 3 : 4,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color: AppColors.textSecondary,
+                  time,
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.of(
+                      context,
+                      AppColors.textSecondary,
+                      AppColors.lightTextSecondary,
+                    ),
                   ),
                 ),
               ],
             ),
           ),
-          SizedBox(width: compact ? 12 : 16),
-          Container(
-            width: compact ? 68 : 82,
-            height: compact ? 68 : 82,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: AppColors.primarySoft,
-              border: Border.all(
-                color: AppColors.primary.withValues(alpha: 0.45),
-              ),
-            ),
-            child: const Icon(
-              Icons.workspace_premium_rounded,
-              color: AppColors.warning,
-              size: 34,
-            ),
-          ),
+          Icon(Icons.check_circle_rounded, color: AppColors.success, size: 18),
         ],
       ),
     );
@@ -248,12 +448,20 @@ class HomeScreen extends ConsumerWidget {
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: AppColors.cardBgElevated,
+                color: AppColors.of(
+                  context,
+                  AppColors.cardBgElevated,
+                  AppColors.lightCardBgElevated,
+                ),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.receipt_long_rounded,
-                color: AppColors.textSecondary,
+                color: AppColors.of(
+                  context,
+                  AppColors.textSecondary,
+                  AppColors.lightTextSecondary,
+                ),
               ),
             ),
             const SizedBox(width: 14),
@@ -264,7 +472,11 @@ class HomeScreen extends ConsumerWidget {
                   Text(
                     'Stop Receipt mới nhất',
                     style: AppTextStyles.bodyMedium.copyWith(
-                      color: AppColors.textSecondary,
+                      color: AppColors.of(
+                        context,
+                        AppColors.textSecondary,
+                        AppColors.lightTextSecondary,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -272,7 +484,13 @@ class HomeScreen extends ConsumerWidget {
                     'Chưa có biên lai nào được tạo.',
                     maxLines: compact ? 2 : 1,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTextStyles.labelLarge,
+                    style: AppTextStyles.labelLarge.copyWith(
+                      color: AppColors.of(
+                        context,
+                        AppColors.textPrimary,
+                        AppColors.lightTextPrimary,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -306,7 +524,11 @@ class HomeScreen extends ConsumerWidget {
                 Text(
                   'Stop Receipt mới nhất',
                   style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.textSecondary,
+                    color: AppColors.of(
+                      context,
+                      AppColors.textSecondary,
+                      AppColors.lightTextSecondary,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -322,7 +544,11 @@ class HomeScreen extends ConsumerWidget {
                 Text(
                   _formatTime(receipt.completedAt),
                   style: AppTextStyles.bodyMedium.copyWith(
-                    color: AppColors.textSecondary,
+                    color: AppColors.of(
+                      context,
+                      AppColors.textSecondary,
+                      AppColors.lightTextSecondary,
+                    ),
                   ),
                 ),
               ],
@@ -336,7 +562,11 @@ class HomeScreen extends ConsumerWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: AppTextStyles.bodySmall.copyWith(
-                  color: AppColors.textTertiary,
+                  color: AppColors.of(
+                    context,
+                    AppColors.textTertiary,
+                    AppColors.lightTextTertiary,
+                  ),
                 ),
               ),
               const SizedBox(height: 6),
@@ -386,14 +616,22 @@ class HomeScreen extends ConsumerWidget {
                     decoration: BoxDecoration(
                       color: alarm.isEnabled
                           ? AppColors.primarySoft
-                          : AppColors.cardBgElevated,
+                          : AppColors.of(
+                              context,
+                              AppColors.cardBgElevated,
+                              AppColors.lightCardBgElevated,
+                            ),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Icon(
                       _stopTypeIcon(alarm.stopType),
                       color: alarm.isEnabled
                           ? AppColors.primary
-                          : AppColors.textSecondary,
+                          : AppColors.of(
+                              context,
+                              AppColors.textSecondary,
+                              AppColors.lightTextSecondary,
+                            ),
                     ),
                   ),
                   const SizedBox(width: 14),
@@ -414,6 +652,11 @@ class HomeScreen extends ConsumerWidget {
                                   fontSize: compact
                                       ? 18
                                       : AppTextStyles.h4.fontSize,
+                                  color: AppColors.of(
+                                    context,
+                                    AppColors.textPrimary,
+                                    AppColors.lightTextPrimary,
+                                  ),
                                 ),
                               ),
                             ),
@@ -422,7 +665,11 @@ class HomeScreen extends ConsumerWidget {
                               child: Text(
                                 _getRepeatSummary(alarm.repeatDays),
                                 style: AppTextStyles.bodySmall.copyWith(
-                                  color: AppColors.textSecondary,
+                                  color: AppColors.of(
+                                    context,
+                                    AppColors.textSecondary,
+                                    AppColors.lightTextSecondary,
+                                  ),
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -437,7 +684,11 @@ class HomeScreen extends ConsumerWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: AppTextStyles.bodyMedium.copyWith(
-                            color: AppColors.textPrimary,
+                            color: AppColors.of(
+                              context,
+                              AppColors.textPrimary,
+                              AppColors.lightTextPrimary,
+                            ),
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -449,7 +700,11 @@ class HomeScreen extends ConsumerWidget {
                     label: alarm.isEnabled ? 'BẬT' : 'TẮT',
                     color: alarm.isEnabled
                         ? AppColors.primary
-                        : AppColors.textTertiary,
+                        : AppColors.of(
+                            context,
+                            AppColors.textTertiary,
+                            AppColors.lightTextTertiary,
+                          ),
                     filled: alarm.isEnabled,
                   ),
                 ],
@@ -474,7 +729,11 @@ class HomeScreen extends ConsumerWidget {
             maxLines: compact ? 3 : 2,
             overflow: TextOverflow.ellipsis,
             style: AppTextStyles.bodyMedium.copyWith(
-              color: AppColors.textSecondary,
+              color: AppColors.of(
+                context,
+                AppColors.textSecondary,
+                AppColors.lightTextSecondary,
+              ),
             ),
           ),
           const SizedBox(height: 14),

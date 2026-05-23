@@ -13,12 +13,14 @@ class AlarmForm extends StatelessWidget {
   final AlarmState state;
   final AlarmController notifier;
   final TextEditingController customLabelController;
+  final TextEditingController messageController;
 
   const AlarmForm({
     super.key,
     required this.state,
     required this.notifier,
     required this.customLabelController,
+    required this.messageController,
   });
 
   @override
@@ -41,6 +43,8 @@ class AlarmForm extends StatelessWidget {
           _buildCustomLabelSection(context),
         ],
         SizedBox(height: sectionSpacing),
+        _buildMessageSection(context),
+        SizedBox(height: sectionSpacing),
         _buildEnabledSection(context),
         if (state.error != null) ...[
           const SizedBox(height: 18),
@@ -58,7 +62,16 @@ class AlarmForm extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Bạn muốn dừng điều gì?', style: AppTextStyles.h4),
+        Text(
+          'Bạn muốn dừng điều gì?',
+          style: AppTextStyles.h4.copyWith(
+            color: AppColors.of(
+              context,
+              AppColors.textPrimary,
+              AppColors.lightTextPrimary,
+            ),
+          ),
+        ),
         const SizedBox(height: 12),
         GridView.builder(
           shrinkWrap: true,
@@ -94,28 +107,7 @@ class AlarmForm extends StatelessWidget {
         const AppSectionTitle(title: 'THỜI GIAN'),
         const SizedBox(height: 10),
         GestureDetector(
-          onTap: () async {
-            final time = await showTimePicker(
-              context: context,
-              initialTime: TimeOfDay(hour: state.hour, minute: state.minute),
-              builder: (context, child) {
-                return Theme(
-                  data: Theme.of(context).copyWith(
-                    colorScheme: const ColorScheme.dark(
-                      primary: AppColors.primary,
-                      onPrimary: AppColors.background,
-                      surface: AppColors.cardBg,
-                      onSurface: AppColors.textPrimary,
-                    ),
-                  ),
-                  child: child!,
-                );
-              },
-            );
-            if (time != null) {
-              notifier.setTime(time.hour, time.minute);
-            }
-          },
+          onTap: () => _showTimePickerBottomSheet(context, state, notifier),
           child: AppGlassCard(
             child: Row(
               children: [
@@ -141,6 +133,161 @@ class AlarmForm extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  void _showTimePickerBottomSheet(
+    BuildContext context,
+    AlarmState state,
+    AlarmController notifier,
+  ) {
+    int selectedHour = state.hour;
+    int selectedMinute = state.minute;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      enableDrag: true,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.4,
+        minChildSize: 0.35,
+        maxChildSize: 0.5,
+        builder: (context, scrollController) => Container(
+          decoration: BoxDecoration(
+            color: AppColors.of(
+              context,
+              AppColors.cardBg,
+              AppColors.lightCardBg,
+            ),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            children: [
+              Container(
+                margin: const EdgeInsets.symmetric(vertical: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.of(
+                    context,
+                    AppColors.border,
+                    AppColors.lightBorder,
+                  ),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 8,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text(
+                        'Hủy',
+                        style: AppTextStyles.labelMedium.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        notifier.setTime(selectedHour, selectedMinute);
+                        Navigator.pop(context);
+                      },
+                      child: Text(
+                        'Xong',
+                        style: AppTextStyles.labelMedium.copyWith(
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _buildTimeWheel(
+                        context: context,
+                        items: List.generate(24, (i) => i),
+                        selectedValue: selectedHour,
+                        onChanged: (value) => selectedHour = value,
+                        formatter: (value) => value.toString().padLeft(2, '0'),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(
+                        ':',
+                        style: AppTextStyles.alarmTime.copyWith(
+                          fontSize: 36,
+                          color: AppColors.of(
+                            context,
+                            AppColors.textPrimary,
+                            AppColors.lightTextPrimary,
+                          ),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: _buildTimeWheel(
+                        context: context,
+                        items: List.generate(60, (i) => i),
+                        selectedValue: selectedMinute,
+                        onChanged: (value) => selectedMinute = value,
+                        formatter: (value) => value.toString().padLeft(2, '0'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTimeWheel({
+    required BuildContext context,
+    required List<int> items,
+    required int selectedValue,
+    required Function(int) onChanged,
+    required String Function(int) formatter,
+  }) {
+    return ListWheelScrollView.useDelegate(
+      itemExtent: 50,
+      physics: const FixedExtentScrollPhysics(),
+      onSelectedItemChanged: onChanged,
+      controller: FixedExtentScrollController(initialItem: selectedValue),
+      childDelegate: ListWheelChildBuilderDelegate(
+        builder: (context, index) {
+          final value = items[index];
+          final isSelected = value == selectedValue;
+          return Center(
+            child: Text(
+              formatter(value),
+              style: AppTextStyles.alarmTime.copyWith(
+                fontSize: 32,
+                color: isSelected
+                    ? AppColors.primary
+                    : AppColors.of(
+                        context,
+                        AppColors.textSecondary,
+                        AppColors.lightTextSecondary,
+                      ),
+              ),
+            ),
+          );
+        },
+        childCount: items.length,
+      ),
     );
   }
 
@@ -206,11 +353,19 @@ class AlarmForm extends StatelessWidget {
                         shape: BoxShape.circle,
                         color: isSelected
                             ? AppColors.primary
-                            : AppColors.cardBgElevated,
+                            : AppColors.of(
+                                context,
+                                AppColors.cardBgElevated,
+                                AppColors.lightCardBgElevated,
+                              ),
                         border: Border.all(
                           color: isSelected
                               ? AppColors.primary
-                              : AppColors.border,
+                              : AppColors.of(
+                                  context,
+                                  AppColors.border,
+                                  AppColors.lightBorder,
+                                ),
                         ),
                       ),
                       alignment: Alignment.center,
@@ -219,7 +374,11 @@ class AlarmForm extends StatelessWidget {
                         style: AppTextStyles.labelSmall.copyWith(
                           color: isSelected
                               ? AppColors.background
-                              : AppColors.textPrimary,
+                              : AppColors.of(
+                                  context,
+                                  AppColors.textPrimary,
+                                  AppColors.lightTextPrimary,
+                                ),
                         ),
                       ),
                     ),
@@ -303,11 +462,19 @@ class AlarmForm extends StatelessWidget {
                         shape: BoxShape.circle,
                         color: isSelected
                             ? AppColors.primarySoft
-                            : AppColors.cardBgElevated,
+                            : AppColors.of(
+                                context,
+                                AppColors.cardBgElevated,
+                                AppColors.lightCardBgElevated,
+                              ),
                         border: Border.all(
                           color: isSelected
                               ? AppColors.primary
-                              : AppColors.border,
+                              : AppColors.of(
+                                  context,
+                                  AppColors.border,
+                                  AppColors.lightBorder,
+                                ),
                         ),
                       ),
                       child: Icon(
@@ -317,7 +484,11 @@ class AlarmForm extends StatelessWidget {
                         size: 18,
                         color: isSelected
                             ? AppColors.primary
-                            : AppColors.textSecondary,
+                            : AppColors.of(
+                                context,
+                                AppColors.textSecondary,
+                                AppColors.lightTextSecondary,
+                              ),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -330,7 +501,11 @@ class AlarmForm extends StatelessWidget {
                             style: AppTextStyles.labelLarge.copyWith(
                               color: isSelected
                                   ? AppColors.primary
-                                  : AppColors.textPrimary,
+                                  : AppColors.of(
+                                      context,
+                                      AppColors.textPrimary,
+                                      AppColors.lightTextPrimary,
+                                    ),
                             ),
                           ),
                           const SizedBox(height: 6),
@@ -339,7 +514,11 @@ class AlarmForm extends StatelessWidget {
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: AppTextStyles.bodySmall.copyWith(
-                              color: AppColors.textSecondary,
+                              color: AppColors.of(
+                                context,
+                                AppColors.textSecondary,
+                                AppColors.lightTextSecondary,
+                              ),
                             ),
                           ),
                         ],
@@ -364,9 +543,54 @@ class AlarmForm extends StatelessWidget {
         TextField(
           controller: customLabelController,
           onChanged: notifier.setCustomTypeLabel,
-          style: AppTextStyles.bodyLarge,
-          decoration: const InputDecoration(
+          style: AppTextStyles.bodyLarge.copyWith(
+            color: AppColors.of(
+              context,
+              AppColors.textPrimary,
+              AppColors.lightTextPrimary,
+            ),
+          ),
+          decoration: InputDecoration(
             hintText: 'Ví dụ: Đọc sách, tập thể dục...',
+            hintStyle: AppTextStyles.bodyLarge.copyWith(
+              color: AppColors.of(
+                context,
+                AppColors.textSecondary,
+                AppColors.lightTextSecondary,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMessageSection(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const AppSectionTitle(title: 'LỜI NHẮN (TÙY CHỌN)'),
+        const SizedBox(height: 10),
+        TextField(
+          controller: messageController,
+          onChanged: notifier.setMessage,
+          style: AppTextStyles.bodyLarge.copyWith(
+            color: AppColors.of(
+              context,
+              AppColors.textPrimary,
+              AppColors.lightTextPrimary,
+            ),
+          ),
+          maxLines: 3,
+          decoration: InputDecoration(
+            hintText: 'Nhập lời nhắn cá nhân cho báo thức này...',
+            hintStyle: AppTextStyles.bodyLarge.copyWith(
+              color: AppColors.of(
+                context,
+                AppColors.textSecondary,
+                AppColors.lightTextSecondary,
+              ),
+            ),
           ),
         ),
       ],
@@ -384,7 +608,11 @@ class AlarmForm extends StatelessWidget {
             decoration: BoxDecoration(
               color: state.isEnabled
                   ? AppColors.primarySoft
-                  : AppColors.cardBgElevated,
+                  : AppColors.of(
+                      context,
+                      AppColors.cardBgElevated,
+                      AppColors.lightCardBgElevated,
+                    ),
               borderRadius: BorderRadius.circular(14),
             ),
             child: Icon(
@@ -393,7 +621,11 @@ class AlarmForm extends StatelessWidget {
                   : Icons.notifications_off_outlined,
               color: state.isEnabled
                   ? AppColors.primary
-                  : AppColors.textSecondary,
+                  : AppColors.of(
+                      context,
+                      AppColors.textSecondary,
+                      AppColors.lightTextSecondary,
+                    ),
             ),
           ),
           const SizedBox(width: 14),
@@ -401,14 +633,27 @@ class AlarmForm extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Kích hoạt alarm', style: AppTextStyles.labelLarge),
+                Text(
+                  'Kích hoạt alarm',
+                  style: AppTextStyles.labelLarge.copyWith(
+                    color: AppColors.of(
+                      context,
+                      AppColors.textPrimary,
+                      AppColors.lightTextPrimary,
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 4),
                 Text(
                   'Alarm vẫn được lưu kể cả khi tắt thông báo.',
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.textSecondary,
+                    color: AppColors.of(
+                      context,
+                      AppColors.textSecondary,
+                      AppColors.lightTextSecondary,
+                    ),
                   ),
                 ),
               ],
@@ -443,7 +688,7 @@ class AlarmForm extends StatelessWidget {
 
   IconData _modeIcon(StopMode mode) {
     switch (mode) {
-      case StopMode.gentle:
+      case StopMode.general:
         return Icons.bedtime_outlined;
       case StopMode.strict:
         return Icons.local_fire_department_outlined;
@@ -464,16 +709,29 @@ class _TimeBox extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(vertical: compact ? 16 : 20),
       decoration: BoxDecoration(
-        color: AppColors.cardBgElevated,
+        color: AppColors.of(
+          context,
+          AppColors.cardBgElevated,
+          AppColors.lightCardBgElevated,
+        ),
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(
+          color: AppColors.of(context, AppColors.border, AppColors.lightBorder),
+        ),
       ),
       alignment: Alignment.center,
       child: Text(
         value,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: AppTextStyles.alarmTime.copyWith(fontSize: compact ? 30 : 38),
+        style: AppTextStyles.alarmTime.copyWith(
+          fontSize: compact ? 30 : 38,
+          color: AppColors.of(
+            context,
+            AppColors.textPrimary,
+            AppColors.lightTextPrimary,
+          ),
+        ),
       ),
     );
   }

@@ -26,7 +26,7 @@ class ReceiptDetailScreen extends ConsumerWidget {
     );
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: AppGradientBackground(
         padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
         child: SafeArea(
@@ -87,7 +87,11 @@ class ReceiptDetailScreen extends ConsumerWidget {
                         overflow: TextOverflow.ellipsis,
                         textAlign: TextAlign.center,
                         style: AppTextStyles.bodySmall.copyWith(
-                          color: AppColors.textSecondary,
+                          color: AppColors.of(
+                            context,
+                            AppColors.textSecondary,
+                            AppColors.lightTextSecondary,
+                          ),
                         ),
                       ),
                     ],
@@ -152,7 +156,14 @@ class _ActionItem extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: AppColors.textPrimary),
+          Icon(
+            icon,
+            color: AppColors.of(
+              context,
+              AppColors.textPrimary,
+              AppColors.lightTextPrimary,
+            ),
+          ),
           const SizedBox(height: 6),
           Text(
             label,
@@ -160,7 +171,11 @@ class _ActionItem extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
             style: AppTextStyles.bodySmall.copyWith(
-              color: AppColors.textSecondary,
+              color: AppColors.of(
+                context,
+                AppColors.textSecondary,
+                AppColors.lightTextSecondary,
+              ),
             ),
           ),
         ],

@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/app_settings.dart';
 import '../../../alarms/domain/entities/stop_mode.dart';
@@ -23,11 +24,9 @@ class SettingsController extends StateNotifier<SettingsState> {
     state = state.copyWith(isLoading: true);
 
     try {
-      final settings = await _repository.getSettings() ?? AppSettings.defaultSettings();
-      state = state.copyWith(
-        settings: settings,
-        isLoading: false,
-      );
+      final settings =
+          await _repository.getSettings() ?? AppSettings.defaultSettings();
+      state = state.copyWith(settings: settings, isLoading: false);
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
@@ -65,6 +64,38 @@ class SettingsController extends StateNotifier<SettingsState> {
     state = state.copyWith(settings: updated);
   }
 
+  Future<void> setThemeMode(ThemeMode mode) async {
+    final current = state.settings;
+    if (current == null) return;
+
+    final updated = current.copyWith(themeMode: mode);
+    await _repository.saveSettings(updated);
+    state = state.copyWith(settings: updated);
+  }
+
+  Future<void> setUserName(String? name) async {
+    final current = state.settings;
+    if (current == null) return;
+
+    final trimmedName = name?.trim();
+    final updated = current.copyWith(
+      userName: trimmedName?.isEmpty ?? true ? null : trimmedName,
+    );
+    await _repository.saveSettings(updated);
+    state = state.copyWith(settings: updated);
+  }
+
+  Future<Map<String, dynamic>> exportData() async {
+    return _storageService.exportAllData();
+  }
+
+  Future<void> importData(Map<String, dynamic> data) async {
+    // Cancel all notifications before importing
+    await _notificationService.cancelAll();
+    await _storageService.importData(data);
+    await loadSettings();
+  }
+
   Future<void> resetAllData() async {
     try {
       // Cancel all notifications before clearing data
@@ -82,18 +113,10 @@ class SettingsState {
   final bool isLoading;
   final String? error;
 
-  SettingsState({
-    this.settings,
-    required this.isLoading,
-    this.error,
-  });
+  SettingsState({this.settings, required this.isLoading, this.error});
 
   factory SettingsState.initial() {
-    return SettingsState(
-      settings: null,
-      isLoading: false,
-      error: null,
-    );
+    return SettingsState(settings: null, isLoading: false, error: null);
   }
 
   SettingsState copyWith({
@@ -110,9 +133,14 @@ class SettingsState {
 }
 
 // Provider
-final settingsControllerProvider = StateNotifierProvider<SettingsController, SettingsState>((ref) {
-  final repository = ref.watch(settingsRepositoryProvider);
-  final storageService = ref.watch(storageServiceProvider);
-  final notificationService = ref.watch(notificationServiceProvider);
-  return SettingsController(repository, storageService, notificationService);
-});
+final settingsControllerProvider =
+    StateNotifierProvider<SettingsController, SettingsState>((ref) {
+      final repository = ref.watch(settingsRepositoryProvider);
+      final storageService = ref.watch(storageServiceProvider);
+      final notificationService = ref.watch(notificationServiceProvider);
+      return SettingsController(
+        repository,
+        storageService,
+        notificationService,
+      );
+    });

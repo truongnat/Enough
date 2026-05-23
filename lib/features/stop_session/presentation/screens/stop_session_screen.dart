@@ -45,15 +45,15 @@ class _StopSessionScreenState extends ConsumerState<StopSessionScreen> {
     final compact = Responsive.compactMode(context);
 
     if (state.isLoading) {
-      return const Scaffold(
-        backgroundColor: AppColors.background,
-        body: Center(child: CircularProgressIndicator()),
+      return Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        body: const Center(child: CircularProgressIndicator()),
       );
     }
 
     if (state.error != null) {
       return Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: Center(
           child: Text('Error: ${state.error}', style: AppTextStyles.bodyLarge),
         ),
@@ -91,7 +91,7 @@ class _StopSessionScreenState extends ConsumerState<StopSessionScreen> {
         }
       },
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: AppGradientBackground(
           padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
           child: SafeArea(
@@ -142,13 +142,36 @@ class _StopSessionScreenState extends ConsumerState<StopSessionScreen> {
                         ),
                         SizedBox(height: compact ? 14 : 18),
                         Center(
-                          child: AppIllustrationPlaceholder(
-                            icon: _stopTypeIcon(
-                              state.alarm?.stopType ?? StopType.custom,
-                            ),
-                            label: 'TODO(ui-assets)\nalarm illustration',
+                          child: Container(
                             width: compact ? 180 : 220,
                             height: compact ? 160 : 220,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(24),
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  AppColors.primary.withValues(alpha: 0.2),
+                                  AppColors.primary.withValues(alpha: 0.05),
+                                ],
+                              ),
+                              border: Border.all(
+                                color: AppColors.of(
+                                  context,
+                                  AppColors.border,
+                                  AppColors.lightBorder,
+                                ),
+                              ),
+                            ),
+                            child: Center(
+                              child: Icon(
+                                _stopTypeIcon(
+                                  state.alarm?.stopType ?? StopType.custom,
+                                ),
+                                size: 80,
+                                color: AppColors.primary.withValues(alpha: 0.8),
+                              ),
+                            ),
                           ),
                         ),
                         SizedBox(height: compact ? 14 : 18),
@@ -158,7 +181,11 @@ class _StopSessionScreenState extends ConsumerState<StopSessionScreen> {
                             maxLines: compact ? 4 : 5,
                             overflow: TextOverflow.ellipsis,
                             style: AppTextStyles.bodyLarge.copyWith(
-                              color: AppColors.textSecondary,
+                              color: AppColors.of(
+                                context,
+                                AppColors.textSecondary,
+                                AppColors.lightTextSecondary,
+                              ),
                             ),
                           ),
                         ),
@@ -283,8 +310,16 @@ class _StopSessionScreenState extends ConsumerState<StopSessionScreen> {
                           overflow: TextOverflow.ellipsis,
                           style: AppTextStyles.bodyMedium.copyWith(
                             color: isChecked
-                                ? AppColors.textTertiary
-                                : AppColors.textPrimary,
+                                ? AppColors.of(
+                                    context,
+                                    AppColors.textTertiary,
+                                    AppColors.lightTextTertiary,
+                                  )
+                                : AppColors.of(
+                                    context,
+                                    AppColors.textPrimary,
+                                    AppColors.lightTextPrimary,
+                                  ),
                             decoration: isChecked
                                 ? TextDecoration.lineThrough
                                 : null,
@@ -368,7 +403,7 @@ class _StopSessionScreenState extends ConsumerState<StopSessionScreen> {
   }
 
   String _quoteForState(StopSessionState state) {
-    final mode = state.alarm?.mode ?? StopMode.gentle;
+    final mode = state.alarm?.mode ?? StopMode.general;
     return Copywriting.getStopSessionMessage(mode.name);
   }
 

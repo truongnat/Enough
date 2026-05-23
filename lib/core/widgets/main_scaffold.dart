@@ -14,6 +14,7 @@ class MainScaffold extends StatelessWidget {
     final compact = Responsive.compactMode(context);
     final bottomInset = MediaQuery.paddingOf(context).bottom;
     final navHeight = compact ? 82.0 : 88.0;
+    final brightness = Theme.of(context).brightness;
     return Scaffold(
       body: navigationShell,
       extendBody: true,
@@ -29,12 +30,24 @@ class MainScaffold extends StatelessWidget {
                 top: compact ? 14 : 16,
                 child: Container(
                   decoration: BoxDecoration(
-                    color: AppColors.cardBgGlass,
+                    color: AppColors.of(
+                      context,
+                      AppColors.cardBgGlass,
+                      AppColors.lightCardBgGlass,
+                    ),
                     borderRadius: BorderRadius.circular(28),
-                    border: Border.all(color: AppColors.border),
+                    border: Border.all(
+                      color: AppColors.of(
+                        context,
+                        AppColors.border,
+                        AppColors.lightBorder,
+                      ),
+                    ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.28),
+                        color: Colors.black.withValues(
+                          alpha: brightness == Brightness.dark ? 0.28 : 0.08,
+                        ),
                         blurRadius: 28,
                         offset: const Offset(0, 14),
                       ),
@@ -98,10 +111,12 @@ class MainScaffold extends StatelessWidget {
                       color: Colors.white.withValues(alpha: 0.12),
                     ),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.add_rounded,
                     size: 30,
-                    color: AppColors.background,
+                    color: brightness == Brightness.dark
+                        ? AppColors.background
+                        : Colors.white,
                   ),
                 ),
               ),
@@ -136,7 +151,13 @@ class _NavItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final compact = Responsive.compactMode(context);
-    final color = isActive ? AppColors.primary : AppColors.textTertiary;
+    final color = isActive
+        ? AppColors.primary
+        : AppColors.of(
+            context,
+            AppColors.textTertiary,
+            AppColors.lightTextTertiary,
+          );
     return Expanded(
       child: InkWell(
         onTap: onTap,

@@ -42,7 +42,9 @@ class AlarmRuntimeState {
     return AlarmRuntimeState(
       activeAlarmId: clearActive ? null : (activeAlarmId ?? this.activeAlarmId),
       activeAlarm: clearActive ? null : (activeAlarm ?? this.activeAlarm),
-      activeOccurrenceKey: clearActive ? null : (activeOccurrenceKey ?? this.activeOccurrenceKey),
+      activeOccurrenceKey: clearActive
+          ? null
+          : (activeOccurrenceKey ?? this.activeOccurrenceKey),
       isRinging: isRinging ?? this.isRinging,
       shouldShowAlarmModal: shouldShowAlarmModal ?? this.shouldShowAlarmModal,
       error: error,
@@ -96,7 +98,8 @@ class AlarmRuntimeController extends StateNotifier<AlarmRuntimeState> {
       if (state.shouldShowAlarmModal || state.activeAlarmId != null) return;
       final alarms = await _alarmRepository.getAlarms();
       final now = DateTime.now();
-      final lastCheck = _lastCheckAt ?? now.subtract(const Duration(seconds: 20));
+      final lastCheck =
+          _lastCheckAt ?? now.subtract(const Duration(seconds: 20));
       _lastCheckAt = now;
 
       for (final alarm in alarms) {
@@ -133,7 +136,10 @@ class AlarmRuntimeController extends StateNotifier<AlarmRuntimeState> {
       return;
     }
 
-    await _ringingService.startRinging(alarmId: alarmId);
+    await _ringingService.startRinging(
+      alarmId: alarmId,
+      mode: resolvedAlarm.mode,
+    );
     state = state.copyWith(
       activeAlarmId: alarmId,
       activeAlarm: resolvedAlarm,
@@ -162,7 +168,8 @@ class AlarmRuntimeController extends StateNotifier<AlarmRuntimeState> {
     }
 
     final settings =
-        await _settingsRepository.getSettings() ?? AppSettings.defaultSettings();
+        await _settingsRepository.getSettings() ??
+        AppSettings.defaultSettings();
     await _notificationService.scheduleAlarmSnoozeFromAlarm(
       alarm,
       settings.defaultSnoozeMinutes,
@@ -197,7 +204,8 @@ class AlarmRuntimeController extends StateNotifier<AlarmRuntimeState> {
         case NotificationPayload.actionSnoozeAlarm:
           final alarm = await _findAlarm(notificationPayload.alarmId);
           if (alarm != null) {
-            final settings = await _settingsRepository.getSettings() ??
+            final settings =
+                await _settingsRepository.getSettings() ??
                 AppSettings.defaultSettings();
             await _notificationService.scheduleAlarmSnoozeFromAlarm(
               alarm,
@@ -244,7 +252,8 @@ class AlarmRuntimeController extends StateNotifier<AlarmRuntimeState> {
       alarm.timeOfDayMinute,
     );
 
-    final isTodayScheduled = alarm.repeatDays.isEmpty ||
+    final isTodayScheduled =
+        alarm.repeatDays.isEmpty ||
         alarm.repeatDays.any((day) => day.isoValue == now.weekday);
     if (!isTodayScheduled) return null;
     if (scheduled.isAfter(now)) return null;
@@ -272,19 +281,19 @@ final alarmRingingServiceProvider = Provider<AlarmRingingService>((ref) {
 
 final alarmRuntimeControllerProvider =
     StateNotifierProvider<AlarmRuntimeController, AlarmRuntimeState>((ref) {
-  final alarmRepository = ref.watch(alarmRepositoryProvider);
-  final settingsRepository = ref.watch(settingsRepositoryProvider);
-  final notificationService = ref.watch(notificationServiceProvider);
-  final ringingService = ref.watch(alarmRingingServiceProvider);
+      final alarmRepository = ref.watch(alarmRepositoryProvider);
+      final settingsRepository = ref.watch(settingsRepositoryProvider);
+      final notificationService = ref.watch(notificationServiceProvider);
+      final ringingService = ref.watch(alarmRingingServiceProvider);
 
-  final controller = AlarmRuntimeController(
-    alarmRepository,
-    settingsRepository,
-    notificationService,
-    ringingService,
-  );
-  ref.onDispose(() {
-    unawaited(controller.disposeRuntime());
-  });
-  return controller;
-});
+      final controller = AlarmRuntimeController(
+        alarmRepository,
+        settingsRepository,
+        notificationService,
+        ringingService,
+      );
+      ref.onDispose(() {
+        unawaited(controller.disposeRuntime());
+      });
+      return controller;
+    });

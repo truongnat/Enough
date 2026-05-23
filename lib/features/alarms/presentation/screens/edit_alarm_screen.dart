@@ -20,11 +20,13 @@ class EditAlarmScreen extends ConsumerStatefulWidget {
 
 class _EditAlarmScreenState extends ConsumerState<EditAlarmScreen> {
   late final TextEditingController _customLabelController;
+  late final TextEditingController _messageController;
 
   @override
   void initState() {
     super.initState();
     _customLabelController = TextEditingController();
+    _messageController = TextEditingController();
     Future.microtask(() {
       ref.read(alarmControllerProvider.notifier).loadAlarm(widget.alarmId);
     });
@@ -33,6 +35,7 @@ class _EditAlarmScreenState extends ConsumerState<EditAlarmScreen> {
   @override
   void dispose() {
     _customLabelController.dispose();
+    _messageController.dispose();
     super.dispose();
   }
 
@@ -48,10 +51,13 @@ class _EditAlarmScreenState extends ConsumerState<EditAlarmScreen> {
         _customLabelController.text != state.customTypeLabel) {
       _customLabelController.text = state.customTypeLabel!;
     }
+    if (state.message != null && _messageController.text != state.message) {
+      _messageController.text = state.message!;
+    }
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: AppGradientBackground(
         child: SafeArea(
           bottom: false,
@@ -116,7 +122,11 @@ class _EditAlarmScreenState extends ConsumerState<EditAlarmScreen> {
                     maxLines: compact ? 2 : 1,
                     overflow: TextOverflow.ellipsis,
                     style: AppTextStyles.bodyMedium.copyWith(
-                      color: AppColors.textSecondary,
+                      color: AppColors.of(
+                        context,
+                        AppColors.textSecondary,
+                        AppColors.lightTextSecondary,
+                      ),
                     ),
                   ),
                 ),
@@ -136,6 +146,7 @@ class _EditAlarmScreenState extends ConsumerState<EditAlarmScreen> {
                     state: state,
                     notifier: notifier,
                     customLabelController: _customLabelController,
+                    messageController: _messageController,
                   ),
                 ),
               ),

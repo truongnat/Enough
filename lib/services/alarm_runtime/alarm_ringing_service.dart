@@ -3,10 +3,24 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:vibration/vibration.dart';
+import '../../features/alarms/domain/entities/stop_mode.dart';
 
 class AlarmRingingService {
   static const String _assetPath = 'audio/reverse_alarm_ring.mp3';
-  static const List<int> _pattern = [0, 700, 250, 700, 250, 1200];
+
+  // Vibration patterns for different modes
+  static const List<int> _generalPattern = [0, 700, 250, 700, 250, 1200];
+  static const List<int> _strictPattern = [
+    0,
+    500,
+    150,
+    500,
+    150,
+    500,
+    150,
+    800,
+  ];
+  static const List<int> _memePattern = [0, 300, 200, 300, 200, 300, 200, 500];
 
   final AudioPlayer _audioPlayer = AudioPlayer();
   Timer? _fallbackAlertTimer;
@@ -16,19 +30,45 @@ class AlarmRingingService {
   bool get isRinging => _isRinging;
   String? get alarmId => _alarmId;
 
-  Future<void> startRinging({required String alarmId}) async {
+  Future<void> startRinging({
+    required String alarmId,
+    StopMode mode = StopMode.general,
+  }) async {
     await stopRinging();
     _alarmId = alarmId;
 
-    await _startAudio();
-    await startVibration();
+    await _startAudio(mode);
+    await startVibration(mode);
     _isRinging = true;
   }
 
-  Future<void> _startAudio() async {
+  double _getVolumeForMode(StopMode mode) {
+    switch (mode) {
+      case StopMode.strict:
+        return 1.0; // Max volume for strict mode
+      case StopMode.general:
+        return 0.7; // Softer volume for general mode
+      case StopMode.meme:
+        return 0.8; // Medium volume for meme mode
+    }
+  }
+
+  List<int> _getPatternForMode(StopMode mode) {
+    switch (mode) {
+      case StopMode.strict:
+        return _strictPattern;
+      case StopMode.general:
+        return _generalPattern;
+      case StopMode.meme:
+        return _memePattern;
+    }
+  }
+
+  Future<void> _startAudio(StopMode mode) async {
     try {
+      final volume = _getVolumeForMode(mode);
       await _audioPlayer.setReleaseMode(ReleaseMode.loop);
-      await _audioPlayer.play(AssetSource(_assetPath), volume: 1.0);
+      await _audioPlayer.play(AssetSource(_assetPath), volume: volume);
       return;
     } catch (error) {
       if (kDebugMode) {
@@ -43,11 +83,12 @@ class AlarmRingingService {
     });
   }
 
-  Future<void> startVibration() async {
+  Future<void> startVibration(StopMode mode) async {
     try {
       final hasVibrator = await Vibration.hasVibrator();
       if (!hasVibrator) return;
-      await Vibration.vibrate(pattern: _pattern, repeat: 0);
+      final pattern = _getPatternForMode(mode);
+      await Vibration.vibrate(pattern: pattern, repeat: 0);
     } catch (error) {
       if (kDebugMode) {
         debugPrint('[AlarmRingingService] Vibration unavailable: $error');

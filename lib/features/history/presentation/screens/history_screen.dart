@@ -21,7 +21,7 @@ class HistoryScreen extends ConsumerWidget {
     final compact = Responsive.compactMode(context);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: AppGradientBackground(
         padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
         child: SafeArea(
@@ -68,7 +68,11 @@ class HistoryScreen extends ConsumerWidget {
                           'Chưa có lịch sử nào để kể.',
                           textAlign: TextAlign.center,
                           style: AppTextStyles.bodyLarge.copyWith(
-                            color: AppColors.textSecondary,
+                            color: AppColors.of(
+                              context,
+                              AppColors.textSecondary,
+                              AppColors.lightTextSecondary,
+                            ),
                           ),
                         ),
                       )
@@ -203,7 +207,11 @@ class HistoryScreen extends ConsumerWidget {
                         style: AppTextStyles.labelLarge.copyWith(
                           color: session.status == StopSessionStatus.completed
                               ? AppColors.primary
-                              : AppColors.textPrimary,
+                              : AppColors.of(
+                                  context,
+                                  AppColors.textPrimary,
+                                  AppColors.lightTextPrimary,
+                                ),
                         ),
                       ),
                     ),

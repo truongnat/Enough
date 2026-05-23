@@ -25,9 +25,7 @@ class _ReceiptsScreenState extends ConsumerState<ReceiptsScreen> {
     final notifier = ref.read(receiptsControllerProvider.notifier);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(Copywriting.historyLabel),
-      ),
+      appBar: AppBar(title: Text(Copywriting.historyLabel)),
       body: Column(
         children: [
           _buildFilterChips(state, notifier),
@@ -35,24 +33,28 @@ class _ReceiptsScreenState extends ConsumerState<ReceiptsScreen> {
             child: state.isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : state.filteredReceipts.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.receipt_long,
-                              size: 64,
-                              color: AppColors.textTertiary,
-                            ),
-                            const SizedBox(height: 16.0),
-                            Text(
-                              Copywriting.emptyHistory,
-                              style: AppTextStyles.bodyMedium,
-                            ),
-                          ],
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.receipt_long,
+                          size: 64,
+                          color: AppColors.of(
+                            context,
+                            AppColors.textTertiary,
+                            AppColors.lightTextTertiary,
+                          ),
                         ),
-                      )
-                    : _buildReceiptsList(state, notifier),
+                        const SizedBox(height: 16.0),
+                        Text(
+                          Copywriting.emptyHistory,
+                          style: AppTextStyles.bodyMedium,
+                        ),
+                      ],
+                    ),
+                  )
+                : _buildReceiptsList(state, notifier),
           ),
         ],
       ),
@@ -77,7 +79,11 @@ class _ReceiptsScreenState extends ConsumerState<ReceiptsScreen> {
     );
   }
 
-  Widget _buildFilterChip(String value, String label, ReceiptsController notifier) {
+  Widget _buildFilterChip(
+    String value,
+    String label,
+    ReceiptsController notifier,
+  ) {
     final isSelected = _selectedFilter == value;
     return FilterChip(
       label: Text(label),
@@ -89,11 +95,29 @@ class _ReceiptsScreenState extends ConsumerState<ReceiptsScreen> {
         notifier.filterByStatus(value);
       },
       selectedColor: AppColors.primary,
-      checkmarkColor: AppColors.background,
-      labelStyle: AppTextStyles.labelMedium.copyWith(
-        color: isSelected ? AppColors.background : AppColors.textPrimary,
+      checkmarkColor: AppColors.of(
+        context,
+        AppColors.background,
+        AppColors.lightBackground,
       ),
-      backgroundColor: AppColors.cardBgElevated,
+      labelStyle: AppTextStyles.labelMedium.copyWith(
+        color: isSelected
+            ? AppColors.of(
+                context,
+                AppColors.background,
+                AppColors.lightBackground,
+              )
+            : AppColors.of(
+                context,
+                AppColors.textPrimary,
+                AppColors.lightTextPrimary,
+              ),
+      ),
+      backgroundColor: AppColors.of(
+        context,
+        AppColors.cardBgElevated,
+        AppColors.lightCardBgElevated,
+      ),
     );
   }
 
@@ -110,13 +134,21 @@ class _ReceiptsScreenState extends ConsumerState<ReceiptsScreen> {
           children: [
             Text(
               group['date'],
-              style: AppTextStyles.labelSecondary(AppColors.textSecondary),
+              style: AppTextStyles.labelSecondary(
+                AppColors.of(
+                  context,
+                  AppColors.textSecondary,
+                  AppColors.lightTextSecondary,
+                ),
+              ),
             ),
             const SizedBox(height: 12.0),
-            ...group['receipts'].map<Widget>((receipt) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12.0),
-                  child: _buildReceiptCard(receipt, notifier),
-                )),
+            ...group['receipts'].map<Widget>(
+              (receipt) => Padding(
+                padding: const EdgeInsets.only(bottom: 12.0),
+                child: _buildReceiptCard(receipt, notifier),
+              ),
+            ),
             const SizedBox(height: 16.0),
           ],
         );
@@ -136,10 +168,7 @@ class _ReceiptsScreenState extends ConsumerState<ReceiptsScreen> {
               color: AppColors.success.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12.0),
             ),
-            child: const Icon(
-              Icons.check_circle,
-              color: AppColors.success,
-            ),
+            child: const Icon(Icons.check_circle, color: AppColors.success),
           ),
           const SizedBox(width: 12.0),
           Expanded(
@@ -154,15 +183,23 @@ class _ReceiptsScreenState extends ConsumerState<ReceiptsScreen> {
                 Text(
                   _formatTime(receipt.completedAt),
                   style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.textSecondary,
+                    color: AppColors.of(
+                      context,
+                      AppColors.textSecondary,
+                      AppColors.lightTextSecondary,
+                    ),
                   ),
                 ),
               ],
             ),
           ),
-          const Icon(
+          Icon(
             Icons.chevron_right,
-            color: AppColors.textTertiary,
+            color: AppColors.of(
+              context,
+              AppColors.textTertiary,
+              AppColors.lightTextTertiary,
+            ),
           ),
         ],
       ),
@@ -211,10 +248,7 @@ class _ReceiptsScreenState extends ConsumerState<ReceiptsScreen> {
     }
 
     if (olderReceipts.isNotEmpty) {
-      groups.add({
-        'date': Copywriting.olderLabel,
-        'receipts': olderReceipts,
-      });
+      groups.add({'date': Copywriting.olderLabel, 'receipts': olderReceipts});
     }
 
     return groups;

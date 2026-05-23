@@ -36,7 +36,7 @@ class StopSession {
   static String getWittyQuote(StopMode mode, int seed) {
     final List<String> quotes;
     switch (mode) {
-      case StopMode.gentle:
+      case StopMode.general:
         quotes = [
           'Đủ rồi. Phần còn lại để ngày mai.',
           'Bạn không cần giải quyết mọi thứ tối nay.',

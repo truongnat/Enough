@@ -18,11 +18,13 @@ class CreateAlarmScreen extends ConsumerStatefulWidget {
 
 class _CreateAlarmScreenState extends ConsumerState<CreateAlarmScreen> {
   late final TextEditingController _customLabelController;
+  late final TextEditingController _messageController;
 
   @override
   void initState() {
     super.initState();
     _customLabelController = TextEditingController();
+    _messageController = TextEditingController();
     // Reset state to initial for create
     Future.microtask(() {
       ref.read(alarmControllerProvider.notifier).resetState();
@@ -32,6 +34,7 @@ class _CreateAlarmScreenState extends ConsumerState<CreateAlarmScreen> {
   @override
   void dispose() {
     _customLabelController.dispose();
+    _messageController.dispose();
     super.dispose();
   }
 
@@ -44,7 +47,7 @@ class _CreateAlarmScreenState extends ConsumerState<CreateAlarmScreen> {
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: AppGradientBackground(
         child: SafeArea(
           bottom: false,
@@ -65,7 +68,11 @@ class _CreateAlarmScreenState extends ConsumerState<CreateAlarmScreen> {
                     maxLines: compact ? 2 : 1,
                     overflow: TextOverflow.ellipsis,
                     style: AppTextStyles.bodyMedium.copyWith(
-                      color: AppColors.textSecondary,
+                      color: AppColors.of(
+                        context,
+                        AppColors.textSecondary,
+                        AppColors.lightTextSecondary,
+                      ),
                     ),
                   ),
                 ),
@@ -85,6 +92,7 @@ class _CreateAlarmScreenState extends ConsumerState<CreateAlarmScreen> {
                     state: state,
                     notifier: notifier,
                     customLabelController: _customLabelController,
+                    messageController: _messageController,
                   ),
                 ),
               ),

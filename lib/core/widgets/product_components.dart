@@ -18,8 +18,9 @@ class AppGradientBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
     final content = Container(
-      decoration: const BoxDecoration(gradient: AppColors.screenGlow),
+      decoration: BoxDecoration(gradient: AppColors.screenGlowOf(context)),
       child: Stack(
         children: [
           Positioned(
@@ -35,7 +36,9 @@ class AppGradientBackground extends StatelessWidget {
             right: -60,
             child: _GlowOrb(
               size: 180,
-              color: Colors.white.withValues(alpha: 0.04),
+              color: brightness == Brightness.dark
+                  ? Colors.white.withValues(alpha: 0.04)
+                  : Colors.black.withValues(alpha: 0.02),
             ),
           ),
           Positioned.fill(
@@ -119,12 +122,23 @@ class AppPageHeader extends StatelessWidget {
                   Text(
                     eyebrow!,
                     style: AppTextStyles.labelSmall.copyWith(
-                      color: AppColors.textSecondary,
+                      color: AppColors.of(
+                        context,
+                        AppColors.textSecondary,
+                        AppColors.lightTextSecondary,
+                      ),
                     ),
                   ),
                 Text(
                   title,
-                  style: AppTextStyles.h4.copyWith(fontWeight: FontWeight.w700),
+                  style: AppTextStyles.h4.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.of(
+                      context,
+                      AppColors.textPrimary,
+                      AppColors.lightTextPrimary,
+                    ),
+                  ),
                   textAlign: TextAlign.center,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -173,6 +187,7 @@ class AppRoundIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -182,21 +197,41 @@ class AppRoundIconButton extends StatelessWidget {
           width: size,
           height: size,
           decoration: BoxDecoration(
-            color: backgroundColor ?? AppColors.cardBgElevated,
+            color:
+                backgroundColor ??
+                AppColors.of(
+                  context,
+                  AppColors.cardBgElevated,
+                  AppColors.lightCardBgElevated,
+                ),
             shape: BoxShape.circle,
-            border: Border.all(color: AppColors.border),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.22),
-                blurRadius: 18,
-                offset: const Offset(0, 10),
+            border: Border.all(
+              color: AppColors.of(
+                context,
+                AppColors.border,
+                AppColors.lightBorder,
               ),
-            ],
+            ),
+            boxShadow: brightness == Brightness.dark
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.22),
+                      blurRadius: 18,
+                      offset: const Offset(0, 10),
+                    ),
+                  ]
+                : null,
           ),
           child: Icon(
             icon,
             size: size * 0.42,
-            color: color ?? AppColors.textPrimary,
+            color:
+                color ??
+                AppColors.of(
+                  context,
+                  AppColors.textPrimary,
+                  AppColors.lightTextPrimary,
+                ),
           ),
         ),
       ),
@@ -247,15 +282,26 @@ class AppGlassCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
     final radius = borderRadius ?? BorderRadius.circular(28);
     Widget content = Container(
       decoration: BoxDecoration(
-        color: color ?? AppColors.cardBgGlass,
+        color:
+            color ??
+            AppColors.of(
+              context,
+              AppColors.cardBgGlass,
+              AppColors.lightCardBgGlass,
+            ),
         borderRadius: radius,
-        border: Border.all(color: AppColors.border),
+        border: Border.all(
+          color: AppColors.of(context, AppColors.border, AppColors.lightBorder),
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.22),
+            color: Colors.black.withValues(
+              alpha: brightness == Brightness.dark ? 0.22 : 0.08,
+            ),
             blurRadius: 24,
             offset: const Offset(0, 16),
           ),
@@ -347,7 +393,11 @@ class AppHeroCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: AppTextStyles.bodyMedium.copyWith(
-                        color: AppColors.textSecondary,
+                        color: AppColors.of(
+                          context,
+                          AppColors.textSecondary,
+                          AppColors.lightTextSecondary,
+                        ),
                       ),
                     ),
                     SizedBox(height: compact ? 12 : 16),
@@ -359,7 +409,13 @@ class AppHeroCard extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: AppColors.primarySoft,
                             borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: AppColors.border),
+                            border: Border.all(
+                              color: AppColors.of(
+                                context,
+                                AppColors.border,
+                                AppColors.lightBorder,
+                              ),
+                            ),
                           ),
                           child: Icon(
                             icon,
@@ -390,6 +446,11 @@ class AppHeroCard extends StatelessWidget {
                         fontSize: compact
                             ? 46
                             : AppTextStyles.alarmTime.fontSize,
+                        color: AppColors.of(
+                          context,
+                          AppColors.textPrimary,
+                          AppColors.lightTextPrimary,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -398,7 +459,11 @@ class AppHeroCard extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: AppTextStyles.bodyLarge.copyWith(
-                        color: AppColors.textSecondary,
+                        color: AppColors.of(
+                          context,
+                          AppColors.textSecondary,
+                          AppColors.lightTextSecondary,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -407,7 +472,11 @@ class AppHeroCard extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.textTertiary,
+                        color: AppColors.of(
+                          context,
+                          AppColors.textTertiary,
+                          AppColors.lightTextTertiary,
+                        ),
                       ),
                     ),
                   ],
@@ -450,9 +519,22 @@ class AppIllustrationPlaceholder extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [AppColors.cardBgElevated, AppColors.backgroundSecondary],
+          colors: [
+            AppColors.of(
+              context,
+              AppColors.cardBgElevated,
+              AppColors.lightCardBgElevated,
+            ),
+            AppColors.of(
+              context,
+              AppColors.backgroundSecondary,
+              AppColors.lightBackgroundSecondary,
+            ),
+          ],
         ),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(
+          color: AppColors.of(context, AppColors.border, AppColors.lightBorder),
+        ),
       ),
       child: Stack(
         children: [
@@ -470,7 +552,11 @@ class AppIllustrationPlaceholder extends StatelessWidget {
                   maxLines: compact ? 2 : 3,
                   overflow: TextOverflow.ellipsis,
                   style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.textSecondary,
+                    color: AppColors.of(
+                      context,
+                      AppColors.textSecondary,
+                      AppColors.lightTextSecondary,
+                    ),
                   ),
                 ),
               ],
@@ -482,7 +568,11 @@ class AppIllustrationPlaceholder extends StatelessWidget {
             child: Text(
               'TODO',
               style: AppTextStyles.labelSmall.copyWith(
-                color: AppColors.textTertiary,
+                color: AppColors.of(
+                  context,
+                  AppColors.textTertiary,
+                  AppColors.lightTextTertiary,
+                ),
               ),
             ),
           ),
@@ -512,9 +602,19 @@ class AppPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: filled ? tone.withValues(alpha: 0.18) : AppColors.cardBgElevated,
+        color: filled
+            ? tone.withValues(alpha: 0.18)
+            : AppColors.of(
+                context,
+                AppColors.cardBgElevated,
+                AppColors.lightCardBgElevated,
+              ),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: filled ? tone : AppColors.border),
+        border: Border.all(
+          color: filled
+              ? tone
+              : AppColors.of(context, AppColors.border, AppColors.lightBorder),
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -526,7 +626,13 @@ class AppPill extends StatelessWidget {
           Text(
             label,
             style: AppTextStyles.labelSmall.copyWith(
-              color: filled ? tone : AppColors.textSecondary,
+              color: filled
+                  ? tone
+                  : AppColors.of(
+                      context,
+                      AppColors.textSecondary,
+                      AppColors.lightTextSecondary,
+                    ),
             ),
           ),
         ],
@@ -565,10 +671,20 @@ class AppSegmentedChip extends StatelessWidget {
           decoration: BoxDecoration(
             color: isSelected
                 ? AppColors.primarySoft
-                : AppColors.cardBgElevated,
+                : AppColors.of(
+                    context,
+                    AppColors.cardBgElevated,
+                    AppColors.lightCardBgElevated,
+                  ),
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
-              color: isSelected ? AppColors.primary : AppColors.border,
+              color: isSelected
+                  ? AppColors.primary
+                  : AppColors.of(
+                      context,
+                      AppColors.border,
+                      AppColors.lightBorder,
+                    ),
             ),
           ),
           child: Row(
@@ -581,7 +697,11 @@ class AppSegmentedChip extends StatelessWidget {
                   size: 16,
                   color: isSelected
                       ? AppColors.primary
-                      : AppColors.textSecondary,
+                      : AppColors.of(
+                          context,
+                          AppColors.textSecondary,
+                          AppColors.lightTextSecondary,
+                        ),
                 ),
                 const SizedBox(width: 8),
               ],
@@ -593,7 +713,11 @@ class AppSegmentedChip extends StatelessWidget {
                 style: AppTextStyles.labelMedium.copyWith(
                   color: isSelected
                       ? AppColors.primary
-                      : AppColors.textSecondary,
+                      : AppColors.of(
+                          context,
+                          AppColors.textSecondary,
+                          AppColors.lightTextSecondary,
+                        ),
                 ),
               ),
             ],
@@ -635,10 +759,20 @@ class AppChoiceChip extends StatelessWidget {
           decoration: BoxDecoration(
             color: isSelected
                 ? AppColors.primarySoft
-                : AppColors.cardBgElevated,
+                : AppColors.of(
+                    context,
+                    AppColors.cardBgElevated,
+                    AppColors.lightCardBgElevated,
+                  ),
             borderRadius: BorderRadius.circular(22),
             border: Border.all(
-              color: isSelected ? AppColors.primary : AppColors.border,
+              color: isSelected
+                  ? AppColors.primary
+                  : AppColors.of(
+                      context,
+                      AppColors.border,
+                      AppColors.lightBorder,
+                    ),
               width: isSelected ? 1.5 : 1,
             ),
           ),
@@ -653,14 +787,22 @@ class AppChoiceChip extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: isSelected
                         ? AppColors.primary.withValues(alpha: 0.12)
-                        : AppColors.backgroundSecondary,
+                        : AppColors.of(
+                            context,
+                            AppColors.backgroundSecondary,
+                            AppColors.lightBackgroundSecondary,
+                          ),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
                     icon,
                     color: isSelected
                         ? AppColors.primary
-                        : AppColors.textSecondary,
+                        : AppColors.of(
+                            context,
+                            AppColors.textSecondary,
+                            AppColors.lightTextSecondary,
+                          ),
                   ),
                 ),
               if (icon != null) const SizedBox(height: 12),
@@ -669,17 +811,27 @@ class AppChoiceChip extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: AppTextStyles.labelLarge.copyWith(
-                  color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                  color: isSelected
+                      ? AppColors.primary
+                      : AppColors.of(
+                          context,
+                          AppColors.textPrimary,
+                          AppColors.lightTextPrimary,
+                        ),
                 ),
               ),
               if (subtitle != null) ...[
-                const SizedBox(height: 6),
+                const SizedBox(height: 4),
                 Text(
                   subtitle!,
-                  maxLines: compact ? 1 : 2,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.textSecondary,
+                    color: AppColors.of(
+                      context,
+                      AppColors.textSecondary,
+                      AppColors.lightTextSecondary,
+                    ),
                   ),
                 ),
               ],
@@ -714,7 +866,7 @@ class AppPrimaryButton extends StatelessWidget {
         onPressed: isLoading ? null : onTap,
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
-          foregroundColor: AppColors.background,
+          foregroundColor: Colors.white,
           disabledBackgroundColor: AppColors.primary.withValues(alpha: 0.45),
           elevation: 0,
           padding: EdgeInsets.symmetric(
@@ -731,9 +883,7 @@ class AppPrimaryButton extends StatelessWidget {
                 height: 20,
                 child: CircularProgressIndicator(
                   strokeWidth: 2.2,
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    AppColors.background,
-                  ),
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                 ),
               )
             : Row(
@@ -741,7 +891,7 @@ class AppPrimaryButton extends StatelessWidget {
                 mainAxisSize: MainAxisSize.max,
                 children: [
                   if (icon != null) ...[
-                    Icon(icon, size: 18, color: AppColors.background),
+                    Icon(icon, size: 18, color: Colors.white),
                     const SizedBox(width: 8),
                   ],
                   Flexible(
@@ -751,7 +901,7 @@ class AppPrimaryButton extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: AppTextStyles.labelLarge.copyWith(
-                        color: AppColors.background,
+                        color: Colors.white,
                       ),
                     ),
                   ),
@@ -828,7 +978,13 @@ class AppSectionTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       title,
-      style: AppTextStyles.overline.copyWith(color: AppColors.textSecondary),
+      style: AppTextStyles.overline.copyWith(
+        color: AppColors.of(
+          context,
+          AppColors.textSecondary,
+          AppColors.lightTextSecondary,
+        ),
+      ),
     );
   }
 }
@@ -850,7 +1006,11 @@ class AppSectionLabel extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: AppTextStyles.overline.copyWith(
-              color: AppColors.textSecondary,
+              color: AppColors.of(
+                context,
+                AppColors.textSecondary,
+                AppColors.lightTextSecondary,
+              ),
             ),
           ),
         ),
@@ -948,12 +1108,14 @@ class AppBottomActionBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final compact = Responsive.compactMode(context);
+    final brightness = Theme.of(context).brightness;
     return AppGlassCard(
       padding: EdgeInsets.symmetric(
         horizontal: compact ? 12 : 14,
         vertical: compact ? 8 : 10,
       ),
       borderRadius: BorderRadius.circular(24),
+      color: brightness == Brightness.dark ? null : AppColors.lightCardBgGlass,
       child: Wrap(
         alignment: WrapAlignment.spaceAround,
         spacing: compact ? 12 : 16,
