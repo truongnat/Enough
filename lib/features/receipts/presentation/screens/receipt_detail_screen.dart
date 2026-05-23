@@ -56,20 +56,6 @@ class ReceiptDetailScreen extends ConsumerWidget {
                       AppBottomActionBar(
                         children: [
                           _ActionItem(
-                            icon: Icons.share_outlined,
-                            label: 'Chia sẻ',
-                            onTap: () =>
-                                _showTodo(context, 'TODO: chia sẻ receipt'),
-                          ),
-                          _ActionItem(
-                            icon: Icons.download_outlined,
-                            label: 'Lưu ảnh',
-                            onTap: () => _showTodo(
-                              context,
-                              'TODO: lưu receipt thành ảnh',
-                            ),
-                          ),
-                          _ActionItem(
                             icon: Icons.delete_outline_rounded,
                             label: 'Xóa',
                             onTap: () => _showDeleteDialog(
@@ -79,20 +65,6 @@ class ReceiptDetailScreen extends ConsumerWidget {
                             ),
                           ),
                         ],
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        'Share và lưu ảnh vẫn là TODO visual-only ở pass này.',
-                        maxLines: compact ? 2 : 1,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.center,
-                        style: AppTextStyles.bodySmall.copyWith(
-                          color: AppColors.of(
-                            context,
-                            AppColors.textSecondary,
-                            AppColors.lightTextSecondary,
-                          ),
-                        ),
                       ),
                     ],
                   ),
@@ -128,12 +100,6 @@ class ReceiptDetailScreen extends ConsumerWidget {
         ],
       ),
     );
-  }
-
-  void _showTodo(BuildContext context, String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
   }
 }
 

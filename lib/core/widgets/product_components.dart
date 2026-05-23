@@ -562,20 +562,6 @@ class AppIllustrationPlaceholder extends StatelessWidget {
               ],
             ),
           ),
-          Positioned(
-            top: 12,
-            right: 12,
-            child: Text(
-              'TODO',
-              style: AppTextStyles.labelSmall.copyWith(
-                color: AppColors.of(
-                  context,
-                  AppColors.textTertiary,
-                  AppColors.lightTextTertiary,
-                ),
-              ),
-            ),
-          ),
         ],
       ),
     );
