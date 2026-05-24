@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'app/app.dart';
@@ -13,8 +14,11 @@ void main() async {
   final storageService = LocalStorageService();
   await storageService.init();
 
-  // Seed demo data in SCREENSHOT_MODE (safe because flag is only set via --dart-define)
-  const screenshotMode = String.fromEnvironment('SCREENSHOT_MODE', defaultValue: 'false') == 'true';
+  // Never seed demo alarms outside explicit debug screenshot runs.
+  const screenshotModeRequested =
+      String.fromEnvironment('SCREENSHOT_MODE', defaultValue: 'false') ==
+      'true';
+  final screenshotMode = kDebugMode && screenshotModeRequested;
   if (screenshotMode) {
     await StoreScreenshotSeed.seedDemoData(storageService);
   }

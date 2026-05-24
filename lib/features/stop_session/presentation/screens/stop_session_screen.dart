@@ -8,6 +8,9 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/product_components.dart';
 import '../../../../services/alarm_runtime/alarm_runtime_controller.dart';
+import '../../../history/presentation/controllers/history_controller.dart';
+import '../../../home/presentation/controllers/home_controller.dart';
+import '../../../receipts/presentation/controllers/receipts_controller.dart';
 import '../../../alarms/domain/entities/stop_mode.dart';
 import '../../../alarms/domain/entities/stop_type.dart';
 import '../../../stop_session/domain/entities/stop_session_status.dart';
@@ -67,7 +70,7 @@ class _StopSessionScreenState extends ConsumerState<StopSessionScreen> {
         icon: Icons.verified_rounded,
         iconColor: AppColors.success,
         actionLabel: 'Về trang chủ',
-        onTap: () => router.go('/'),
+        onTap: () => _goHomeAndRefresh(router),
       );
     }
 
@@ -79,7 +82,7 @@ class _StopSessionScreenState extends ConsumerState<StopSessionScreen> {
         icon: Icons.snooze_rounded,
         iconColor: AppColors.warning,
         actionLabel: 'Về trang chủ',
-        onTap: () => router.go('/'),
+        onTap: () => _goHomeAndRefresh(router),
       );
     }
 
@@ -482,5 +485,14 @@ class _StopSessionScreenState extends ConsumerState<StopSessionScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _goHomeAndRefresh(GoRouter router) async {
+    await ref.read(homeControllerProvider.notifier).refresh();
+    ref.read(historyControllerProvider.notifier).refresh();
+    await ref.read(receiptsControllerProvider.notifier).loadReceipts();
+    if (mounted) {
+      router.go('/');
+    }
   }
 }
