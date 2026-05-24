@@ -1,4 +1,4 @@
-package com.truongdev.reverse_alarm
+package com.truongnat.enough
 
 import io.flutter.embedding.android.FlutterActivity
 

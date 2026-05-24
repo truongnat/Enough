@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import '../features/alarms/domain/entities/stop_alarm.dart';
 import '../features/alarms/domain/entities/stop_type.dart';
 import '../features/alarms/domain/entities/stop_mode.dart';
@@ -13,8 +12,6 @@ import '../features/stop_session/data/models/stop_session_model.dart';
 
 class StoreScreenshotSeed {
   static Future<void> seedDemoData(LocalStorageService storage) async {
-    if (!kDebugMode) return;
-
     // Clear all existing data
     await storage.clearAllData();
 
