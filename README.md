@@ -1,6 +1,6 @@
-# reverse_alarm
+# Enough
 
-A new Flutter project.
+Enough is a local-first stop-alarm app.
 
 ## Getting Started
 

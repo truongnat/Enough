@@ -1,6 +1,6 @@
 class AppConstants {
   static const String appName = 'Enough';
-  static const String appSubtitle = 'Reverse Alarm';
+  static const String appSubtitle = 'Alarm for Stopping';
   static const String slogan = 'The alarm for stopping, not starting.';
   static const String appVersion = '1.0.0';
 

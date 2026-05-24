@@ -1,6 +1,6 @@
 # Enough — Product Spec v1
 
-Enough là ứng dụng Reverse Alarm: báo thức để dừng lại, không phải để bắt đầu.
+Enough là ứng dụng báo thức để dừng lại, không phải để bắt đầu.
 
 Mục tiêu:
 Giúp người dùng dừng đúng lúc các hành vi dễ bị cuốn như coding quá muộn, làm việc ngoài giờ, doom scrolling, overthinking, chơi game lâu hoặc thức khuya.

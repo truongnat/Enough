@@ -12,6 +12,7 @@ import 'package:reverse_alarm/features/alarms/presentation/controllers/alarm_con
 class AlarmForm extends StatelessWidget {
   final AlarmState state;
   final AlarmController notifier;
+  final TextEditingController titleController;
   final TextEditingController customLabelController;
   final TextEditingController messageController;
 
@@ -19,6 +20,7 @@ class AlarmForm extends StatelessWidget {
     super.key,
     required this.state,
     required this.notifier,
+    required this.titleController,
     required this.customLabelController,
     required this.messageController,
   });
@@ -117,7 +119,7 @@ class AlarmForm extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         TextField(
-          controller: TextEditingController(text: state.title),
+          controller: titleController,
           decoration: InputDecoration(
             hintText: 'Ví dụ: Dừng code trước khi ngủ',
             filled: true,

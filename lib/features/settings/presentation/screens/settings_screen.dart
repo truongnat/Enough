@@ -539,14 +539,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           // Save to temporary file
           final directory = await getTemporaryDirectory();
           final file = File(
-            '${directory.path}/reverse_alarm_backup_$timestamp.json',
+            '${directory.path}/enough_backup_$timestamp.json',
           );
           await file.writeAsString(jsonString);
 
           // Share the file
           await Share.shareXFiles([
             XFile(file.path),
-          ], subject: 'Reverse Alarm Backup - $timestamp');
+          ], subject: 'Enough Backup - $timestamp');
 
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(

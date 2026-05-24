@@ -4,7 +4,7 @@ class AppLogger {
   static void info(String message, [String? scope]) {
     if (kDebugMode) {
       debugPrint(
-        'ℹ️ [ReverseAlarm]${scope != null ? ' [$scope]' : ''}: $message',
+        'ℹ️ [Enough]${scope != null ? ' [$scope]' : ''}: $message',
       );
     }
   }
@@ -12,7 +12,7 @@ class AppLogger {
   static void warning(String message, [String? scope]) {
     if (kDebugMode) {
       debugPrint(
-        '⚠️ [ReverseAlarm]${scope != null ? ' [$scope]' : ''}: $message',
+        '⚠️ [Enough]${scope != null ? ' [$scope]' : ''}: $message',
       );
     }
   }
@@ -25,7 +25,7 @@ class AppLogger {
   ]) {
     if (kDebugMode) {
       debugPrint(
-        '❌ [ReverseAlarm]${scope != null ? ' [$scope]' : ''}: $message',
+        '❌ [Enough]${scope != null ? ' [$scope]' : ''}: $message',
       );
       if (error != null) debugPrint('Error: $error');
       if (stackTrace != null) debugPrint('StackTrace: $stackTrace');

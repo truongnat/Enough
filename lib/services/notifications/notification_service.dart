@@ -100,53 +100,59 @@ class NotificationService {
   }
 
   Future<bool> requestPermissionsIfNeeded() async {
-    if (defaultTargetPlatform == TargetPlatform.android) {
-      final androidImplementation = _localNotifications
-          .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin
-          >();
-      if (androidImplementation != null) {
-        final granted = await androidImplementation
-            .requestNotificationsPermission();
-        final exactAlarmGranted = await androidImplementation
-            .requestExactAlarmsPermission();
+    try {
+      if (defaultTargetPlatform == TargetPlatform.android) {
+        final androidImplementation = _localNotifications
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >();
+        if (androidImplementation != null) {
+          final granted = await androidImplementation
+              .requestNotificationsPermission();
 
-        if (kDebugMode) {
-          AppLogger.info(
-            'Android permissions - Notification: ${granted ?? false}, Exact Alarm: ${exactAlarmGranted ?? false}',
-            'NotificationService',
-          );
-          if (!(exactAlarmGranted ?? false)) {
-            AppLogger.warning(
-              'Exact alarm permission denied. Alarms may not fire reliably on Android 12+.',
+          if (kDebugMode) {
+            AppLogger.info(
+              'Android notification permission granted: ${granted ?? false}',
+              'NotificationService',
+            );
+            AppLogger.info(
+              'Skipping exact alarm permission during save flow to avoid app resume/plugin instability.',
               'NotificationService',
             );
           }
-        }
 
-        return granted ?? false;
-      }
-    } else if (defaultTargetPlatform == TargetPlatform.iOS) {
-      final iosImplementation = _localNotifications
-          .resolvePlatformSpecificImplementation<
-            IOSFlutterLocalNotificationsPlugin
-          >();
-      if (iosImplementation != null) {
-        final granted = await iosImplementation.requestPermissions(
-          alert: true,
-          badge: true,
-          sound: true,
-        );
-        if (kDebugMode) {
-          AppLogger.info(
-            'iOS permissions granted: ${granted ?? false}',
-            'NotificationService',
-          );
+          return granted ?? false;
         }
-        return granted ?? false;
+      } else if (defaultTargetPlatform == TargetPlatform.iOS) {
+        final iosImplementation = _localNotifications
+            .resolvePlatformSpecificImplementation<
+              IOSFlutterLocalNotificationsPlugin
+            >();
+        if (iosImplementation != null) {
+          final granted = await iosImplementation.requestPermissions(
+            alert: true,
+            badge: true,
+            sound: true,
+          );
+          if (kDebugMode) {
+            AppLogger.info(
+              'iOS permissions granted: ${granted ?? false}',
+              'NotificationService',
+            );
+          }
+          return granted ?? false;
+        }
       }
+      return true;
+    } catch (e) {
+      AppLogger.error(
+        'Error requesting notification permissions',
+        e,
+        null,
+        'NotificationService',
+      );
+      return false;
     }
-    return true;
   }
 
   int _stableIdFromString(String input) {

@@ -17,12 +17,14 @@ class CreateAlarmScreen extends ConsumerStatefulWidget {
 }
 
 class _CreateAlarmScreenState extends ConsumerState<CreateAlarmScreen> {
+  late final TextEditingController _titleController;
   late final TextEditingController _customLabelController;
   late final TextEditingController _messageController;
 
   @override
   void initState() {
     super.initState();
+    _titleController = TextEditingController();
     _customLabelController = TextEditingController();
     _messageController = TextEditingController();
     // Reset state to initial for create
@@ -33,6 +35,7 @@ class _CreateAlarmScreenState extends ConsumerState<CreateAlarmScreen> {
 
   @override
   void dispose() {
+    _titleController.dispose();
     _customLabelController.dispose();
     _messageController.dispose();
     super.dispose();
@@ -91,6 +94,7 @@ class _CreateAlarmScreenState extends ConsumerState<CreateAlarmScreen> {
                   child: AlarmForm(
                     state: state,
                     notifier: notifier,
+                    titleController: _titleController,
                     customLabelController: _customLabelController,
                     messageController: _messageController,
                   ),

@@ -19,12 +19,15 @@ class EditAlarmScreen extends ConsumerStatefulWidget {
 }
 
 class _EditAlarmScreenState extends ConsumerState<EditAlarmScreen> {
+  late final TextEditingController _titleController;
   late final TextEditingController _customLabelController;
   late final TextEditingController _messageController;
+  String? _syncedAlarmId;
 
   @override
   void initState() {
     super.initState();
+    _titleController = TextEditingController();
     _customLabelController = TextEditingController();
     _messageController = TextEditingController();
     Future.microtask(() {
@@ -34,6 +37,7 @@ class _EditAlarmScreenState extends ConsumerState<EditAlarmScreen> {
 
   @override
   void dispose() {
+    _titleController.dispose();
     _customLabelController.dispose();
     _messageController.dispose();
     super.dispose();
@@ -46,13 +50,11 @@ class _EditAlarmScreenState extends ConsumerState<EditAlarmScreen> {
     final horizontalPadding = Responsive.horizontalPadding(context);
     final compact = Responsive.compactMode(context);
 
-    // Sync state to controller text
-    if (state.customTypeLabel != null &&
-        _customLabelController.text != state.customTypeLabel) {
-      _customLabelController.text = state.customTypeLabel!;
-    }
-    if (state.message != null && _messageController.text != state.message) {
-      _messageController.text = state.message!;
+    if (state.alarmId != null && _syncedAlarmId != state.alarmId) {
+      _syncedAlarmId = state.alarmId;
+      _titleController.text = state.title;
+      _customLabelController.text = state.customTypeLabel ?? '';
+      _messageController.text = state.message ?? '';
     }
 
     return Scaffold(
@@ -149,6 +151,7 @@ class _EditAlarmScreenState extends ConsumerState<EditAlarmScreen> {
                   child: AlarmForm(
                     state: state,
                     notifier: notifier,
+                    titleController: _titleController,
                     customLabelController: _customLabelController,
                     messageController: _messageController,
                   ),

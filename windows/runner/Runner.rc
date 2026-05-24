@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.truongdev" "\0"
-            VALUE "FileDescription", "reverse_alarm" "\0"
+            VALUE "FileDescription", "Enough" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "reverse_alarm" "\0"
+            VALUE "InternalName", "Enough" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2026 com.truongdev. All rights reserved." "\0"
-            VALUE "OriginalFilename", "reverse_alarm.exe" "\0"
-            VALUE "ProductName", "reverse_alarm" "\0"
+            VALUE "OriginalFilename", "enough.exe" "\0"
+            VALUE "ProductName", "Enough" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

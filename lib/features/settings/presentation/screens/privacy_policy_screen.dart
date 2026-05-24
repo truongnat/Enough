@@ -24,7 +24,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                     _buildSection(
                       context,
                       'Giới thiệu',
-                      'Reverse Alarm là ứng dụng giúp bạn quản lý và theo dõi các thói quen cần dừng. Chúng tôi cam kết bảo vệ quyền riêng tư của bạn.',
+                      'Enough là ứng dụng giúp bạn quản lý và theo dõi các thói quen cần dừng. Chúng tôi cam kết bảo vệ quyền riêng tư của bạn.',
                     ),
                     _buildSection(
                       context,

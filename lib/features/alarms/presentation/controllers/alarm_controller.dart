@@ -144,9 +144,7 @@ class AlarmController extends StateNotifier<AlarmState> {
   }
 
   void setMessage(String? message) {
-    state = state.copyWith(
-      message: message?.trim().isEmpty ?? true ? null : message?.trim(),
-    );
+    state = state.copyWith(message: message);
   }
 
   void setCustomTypeLabel(String label) {
@@ -172,14 +170,18 @@ class AlarmController extends StateNotifier<AlarmState> {
             ? state.stopType.displayName
             : state.title.trim(),
         stopType: state.stopType,
-        customTypeLabel: state.customTypeLabel,
+        customTypeLabel: state.customTypeLabel?.trim().isEmpty ?? true
+            ? null
+            : state.customTypeLabel?.trim(),
         timeOfDayHour: state.hour,
         timeOfDayMinute: state.minute,
         repeatDays: state.repeatDays,
         mode: state.mode,
         protocolId: state.protocolId,
         isEnabled: state.isEnabled,
-        message: state.message,
+        message: state.message?.trim().isEmpty ?? true
+            ? null
+            : state.message?.trim(),
         createdAt: state.createdAt ?? now,
         updatedAt: now,
       );
