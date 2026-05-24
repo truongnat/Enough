@@ -16,9 +16,7 @@ android {
         isCoreLibraryDesugaringEnabled = true
     }
 
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_17.toString()
-    }
+    kotlinOptions { jvmTarget = JavaVersion.VERSION_17.toString() }
 
     defaultConfig {
         applicationId = "com.truongnat.enough"
@@ -31,7 +29,8 @@ android {
     buildTypes {
         release {
             // Configure release signing with keystore
-            // Create keystore with: keytool -genkey -v -keystore ~/upload-keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+            // Create keystore with: keytool -genkey -v -keystore ~/upload-keystore.jks -keyalg RSA
+            // -keysize 2048 -validity 10000 -alias upload
             // Set environment variables:
             // export KEYSTORE_FILE=~/upload-keystore.jks
             // export KEYSTORE_PASSWORD=your_keystore_password
@@ -45,7 +44,5 @@ android {
 flutter {
     source = "../.."
 
-dependencies {
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
-}
+    dependencies { coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4") }
 }
