@@ -259,7 +259,11 @@ class AlarmForm extends StatelessWidget {
                       child: Text(
                         'Hủy',
                         style: AppTextStyles.labelMedium.copyWith(
-                          color: AppColors.textSecondary,
+                          color: AppColors.of(
+                            context,
+                            AppColors.textSecondary,
+                            AppColors.lightTextSecondary,
+                          ),
                         ),
                       ),
                     ),
@@ -442,7 +446,7 @@ class AlarmForm extends StatelessWidget {
                         day.shortName,
                         style: AppTextStyles.labelSmall.copyWith(
                           color: isSelected
-                              ? AppColors.background
+                              ? Colors.white
                               : AppColors.of(
                                   context,
                                   AppColors.textPrimary,

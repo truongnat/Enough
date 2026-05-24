@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/responsive/responsive.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/product_components.dart';
 import '../../../../core/widgets/receipt_widget.dart';
 import '../controllers/receipts_controller.dart';
@@ -52,20 +51,6 @@ class ReceiptDetailScreen extends ConsumerWidget {
                     children: [
                       const SizedBox(width: double.infinity),
                       ReceiptWidget(receipt: receipt),
-                      const SizedBox(height: 18),
-                      AppBottomActionBar(
-                        children: [
-                          _ActionItem(
-                            icon: Icons.delete_outline_rounded,
-                            label: 'Xóa',
-                            onTap: () => _showDeleteDialog(
-                              context,
-                              notifier,
-                              receipt.id,
-                            ),
-                          ),
-                        ],
-                      ),
                     ],
                   ),
                 ),
@@ -85,6 +70,11 @@ class ReceiptDetailScreen extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        backgroundColor: AppColors.of(
+          context,
+          AppColors.cardBg,
+          AppColors.lightCardBg,
+        ),
         title: const Text('Xóa biên lai'),
         content: const Text('Bạn có chắc muốn xóa biên lai này?'),
         actions: [
@@ -96,53 +86,6 @@ class ReceiptDetailScreen extends ConsumerWidget {
               context.pop();
             },
             child: const Text('Xóa', style: TextStyle(color: AppColors.error)),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ActionItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  const _ActionItem({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final compact = Responsive.compactMode(context);
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            color: AppColors.of(
-              context,
-              AppColors.textPrimary,
-              AppColors.lightTextPrimary,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            label,
-            maxLines: compact ? 2 : 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-            style: AppTextStyles.bodySmall.copyWith(
-              color: AppColors.of(
-                context,
-                AppColors.textSecondary,
-                AppColors.lightTextSecondary,
-              ),
-            ),
           ),
         ],
       ),

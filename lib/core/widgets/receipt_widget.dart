@@ -14,6 +14,13 @@ class ReceiptWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final compact = Responsive.compactMode(context);
+    final preventedItems = receipt.savedFromMessages.isNotEmpty
+        ? receipt.savedFromMessages
+        : StopReceipt.getPreventedItemsFor(receipt.stopType);
+    final resultMessage = receipt.resultMessage.trim().isNotEmpty
+        ? receipt.resultMessage.trim()
+        : 'Đã dừng đúng lúc';
+
     return AppReceiptPaper(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -70,7 +77,7 @@ class ReceiptWidget extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          ...receipt.savedFromMessages.map(
+          ...preventedItems.map(
             (msg) => Padding(
               padding: const EdgeInsets.only(bottom: 10),
               child: Row(
@@ -121,7 +128,7 @@ class ReceiptWidget extends StatelessWidget {
                       : 220,
                 ),
                 child: Text(
-                  '${receipt.resultMessage} ✅',
+                  '$resultMessage ✅',
                   style: AppTextStyles.receiptBody.copyWith(
                     color: AppColors.paperText,
                     fontWeight: FontWeight.w800,

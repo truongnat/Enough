@@ -73,7 +73,11 @@ class _EditAlarmScreenState extends ConsumerState<EditAlarmScreen> {
                       final confirm = await showDialog<bool>(
                         context: context,
                         builder: (context) => AlertDialog(
-                          backgroundColor: AppColors.cardBg,
+                          backgroundColor: AppColors.of(
+                            context,
+                            AppColors.cardBg,
+                            AppColors.lightCardBg,
+                          ),
                           title: const Text('Xóa Alarm?'),
                           content: const Text(
                             'Bạn có chắc chắn muốn xóa báo thức này? Hành động này không thể hoàn tác.',

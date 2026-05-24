@@ -209,7 +209,11 @@ class _StopSessionScreenState extends ConsumerState<StopSessionScreen> {
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: AppTextStyles.bodySmall.copyWith(
-                            color: AppColors.textSecondary,
+                            color: AppColors.of(
+                              context,
+                              AppColors.textSecondary,
+                              AppColors.lightTextSecondary,
+                            ),
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -254,7 +258,11 @@ class _StopSessionScreenState extends ConsumerState<StopSessionScreen> {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: AppTextStyles.labelMedium.copyWith(
-                  color: AppColors.textSecondary,
+                  color: AppColors.of(
+                    context,
+                    AppColors.textSecondary,
+                    AppColors.lightTextSecondary,
+                  ),
                 ),
               ),
             ],
@@ -274,9 +282,19 @@ class _StopSessionScreenState extends ConsumerState<StopSessionScreen> {
                     vertical: 12,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.cardBgElevated,
+                    color: AppColors.of(
+                      context,
+                      AppColors.cardBgElevated,
+                      AppColors.lightCardBgElevated,
+                    ),
                     borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: AppColors.border),
+                    border: Border.all(
+                      color: AppColors.of(
+                        context,
+                        AppColors.border,
+                        AppColors.lightBorder,
+                      ),
+                    ),
                   ),
                   child: Row(
                     children: [
@@ -287,18 +305,26 @@ class _StopSessionScreenState extends ConsumerState<StopSessionScreen> {
                           shape: BoxShape.circle,
                           color: isChecked
                               ? AppColors.success
-                              : AppColors.backgroundSecondary,
+                              : AppColors.of(
+                                  context,
+                                  AppColors.backgroundSecondary,
+                                  AppColors.lightBackgroundSecondary,
+                                ),
                           border: Border.all(
                             color: isChecked
                                 ? AppColors.success
-                                : AppColors.border,
+                                : AppColors.of(
+                                    context,
+                                    AppColors.border,
+                                    AppColors.lightBorder,
+                                  ),
                           ),
                         ),
                         child: isChecked
                             ? const Icon(
                                 Icons.check_rounded,
                                 size: 16,
-                                color: AppColors.background,
+                                color: Colors.white,
                               )
                             : null,
                       ),
@@ -348,7 +374,7 @@ class _StopSessionScreenState extends ConsumerState<StopSessionScreen> {
     final horizontalPadding = Responsive.horizontalPadding(context);
     final compact = Responsive.compactMode(context);
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: AppGradientBackground(
         padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
         child: SafeArea(
@@ -380,7 +406,11 @@ class _StopSessionScreenState extends ConsumerState<StopSessionScreen> {
                         maxLines: compact ? 4 : 5,
                         overflow: TextOverflow.ellipsis,
                         style: AppTextStyles.bodyLarge.copyWith(
-                          color: AppColors.textSecondary,
+                          color: AppColors.of(
+                            context,
+                            AppColors.textSecondary,
+                            AppColors.lightTextSecondary,
+                          ),
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -428,7 +458,11 @@ class _StopSessionScreenState extends ConsumerState<StopSessionScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppColors.cardBg,
+        backgroundColor: AppColors.of(
+          context,
+          AppColors.cardBg,
+          AppColors.lightCardBg,
+        ),
         title: const Text('Rời phiên dừng?'),
         content: const Text(
           'Nếu thoát bây giờ, bạn sẽ bỏ dở alarm moment này.',

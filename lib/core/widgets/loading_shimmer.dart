@@ -20,7 +20,11 @@ class LoadingShimmer extends StatelessWidget {
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: AppColors.cardBgElevated,
+        color: AppColors.of(
+          context,
+          AppColors.cardBgElevated,
+          AppColors.lightCardBgElevated,
+        ),
         borderRadius: BorderRadius.circular(borderRadius),
       ),
       child: _buildShimmerEffect(),

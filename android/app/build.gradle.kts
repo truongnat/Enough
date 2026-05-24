@@ -1,8 +1,17 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+}
+
+val keystoreProperties = Properties()
+val keystorePropertiesFile = rootProject.file("key.properties")
+
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
 android {
@@ -16,7 +25,9 @@ android {
         isCoreLibraryDesugaringEnabled = true
     }
 
-    kotlinOptions { jvmTarget = JavaVersion.VERSION_17.toString() }
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_17.toString()
+    }
 
     defaultConfig {
         applicationId = "com.truongnat.enough"
@@ -26,23 +37,28 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        create("release") {
+            keyAlias = keystoreProperties["keyAlias"] as String
+            keyPassword = keystoreProperties["keyPassword"] as String
+            storeFile = file(keystoreProperties["storeFile"] as String)
+            storePassword = keystoreProperties["storePassword"] as String
+        }
+    }
+
     buildTypes {
         release {
-            // Configure release signing with keystore
-            // Create keystore with: keytool -genkey -v -keystore ~/upload-keystore.jks -keyalg RSA
-            // -keysize 2048 -validity 10000 -alias upload
-            // Set environment variables:
-            // export KEYSTORE_FILE=~/upload-keystore.jks
-            // export KEYSTORE_PASSWORD=your_keystore_password
-            // export KEY_ALIAS=upload
-            // export KEY_PASSWORD=your_key_password
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
+            isMinifyEnabled = true
+            isShrinkResources = true
         }
     }
 }
 
 flutter {
     source = "../.."
+}
 
-    dependencies { coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4") }
+dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 }

@@ -125,31 +125,35 @@ class HistoryScreen extends ConsumerWidget {
     final sections = <Widget>[];
     if (today.isNotEmpty) {
       sections
-        ..add(_sectionLabel('Hôm nay'))
+        ..add(_sectionLabel(context, 'Hôm nay'))
         ..add(_groupCard(context, today, receipts));
     }
     if (yesterday.isNotEmpty) {
       sections
         ..add(const SizedBox(height: 16))
-        ..add(_sectionLabel('Hôm qua'))
+        ..add(_sectionLabel(context, 'Hôm qua'))
         ..add(_groupCard(context, yesterday, receipts));
     }
     if (earlier.isNotEmpty) {
       sections
         ..add(const SizedBox(height: 16))
-        ..add(_sectionLabel('Gần đây'))
+        ..add(_sectionLabel(context, 'Gần đây'))
         ..add(_groupCard(context, earlier, receipts));
     }
     return sections;
   }
 
-  Widget _sectionLabel(String label) {
+  Widget _sectionLabel(BuildContext context, String label) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Text(
         label,
         style: AppTextStyles.labelLarge.copyWith(
-          color: AppColors.textSecondary,
+          color: AppColors.of(
+            context,
+            AppColors.textSecondary,
+            AppColors.lightTextSecondary,
+          ),
         ),
       ),
     );
@@ -180,9 +184,19 @@ class HistoryScreen extends ConsumerWidget {
                   vertical: 12,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.cardBgElevated,
+                  color: AppColors.of(
+                    context,
+                    AppColors.cardBgElevated,
+                    AppColors.lightCardBgElevated,
+                  ),
                   borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: AppColors.border),
+                  border: Border.all(
+                    color: AppColors.of(
+                      context,
+                      AppColors.border,
+                      AppColors.lightBorder,
+                    ),
+                  ),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -194,7 +208,11 @@ class HistoryScreen extends ConsumerWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: AppTextStyles.bodyMedium.copyWith(
-                          color: AppColors.textSecondary,
+                          color: AppColors.of(
+                            context,
+                            AppColors.textSecondary,
+                            AppColors.lightTextSecondary,
+                          ),
                         ),
                       ),
                     ),
